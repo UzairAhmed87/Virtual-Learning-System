@@ -1,0 +1,30 @@
+# Ignore build directories
+build*/
+CMakeFiles/
+CMakeCache.txt
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+
+# Ignore Qt Creator auto-generated files
+*.moc
+moc_*.cpp
+moc_*.h
+ui_*.h
+*.qrc
+*.qrc.dep
+*.qrc.cpp
+*.rcc
+
+# Ignore compiled binaries and temporary files
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.a
+*.lib
+
+# Ignore logs and caches
+*.log
+*.cache
