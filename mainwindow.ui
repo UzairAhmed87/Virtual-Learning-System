@@ -200,6 +200,9 @@ padding-left :10px </string>
 padding-left:5px
 </string>
          </property>
+         <property name="echoMode">
+          <enum>QLineEdit::EchoMode::Password</enum>
+         </property>
         </widget>
        </item>
        <item>

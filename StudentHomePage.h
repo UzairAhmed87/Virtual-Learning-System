@@ -9,6 +9,7 @@
 #include <QGridLayout>
 #include <QPixmap>
 #include <QSpacerItem>
+#include "TopBar.h"
 
 class StudentHomePage : public QWidget {
     Q_OBJECT
@@ -18,7 +19,6 @@ public:
     ~StudentHomePage();
 private:
     // Top Bar Widgets
-    QWidget *topBar;
     QHBoxLayout *topLayout;
     QLabel *logoLabel;
     QPushButton *homeButton;
@@ -31,9 +31,11 @@ private:
 
     // Main Layout
     QVBoxLayout *mainLayout;
+    TopBar *topBar;
 
     // Helper function to create the top bar
     void createTopBar();
+
 
     // Helper function to create the buttons grid
     void createButtonsGrid();

@@ -13,7 +13,7 @@ set(CMAKE_AUTORCC ON)
 # Find Qt6 or Qt5
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
-
+file(COPY ${CMAKE_SOURCE_DIR}/images DESTINATION ${CMAKE_BINARY_DIR})
 # Define project sources
 set(PROJECT_SOURCES
     main.cpp
@@ -28,6 +28,8 @@ set(PROJECT_SOURCES
     StudentHomePage.h
     TeacherHomePage.cpp
     TeacherHomePage.h
+    registerUser.h
+    registerUser.cpp
     resources.qrc
 )
 
@@ -37,6 +39,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         AdminHomePage.h
         .gitignore
+        TopBar.h
+        TopBar.cpp
+        registerUser.h
+        registerUser.cpp
     )
 else()
     if(ANDROID)
