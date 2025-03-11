@@ -1,3 +1,4 @@
+
 #include <QApplication>
 #include <QWidget>
 #include <QVBoxLayout>
@@ -8,7 +9,7 @@
 #include <QPixmap>
 #include <QSpacerItem>
 #include <QDebug>
-
+#include <QStackedWidget>
 #include "AdminHomePage.h"
 #include "registerUser.h"
 #include "TopBar.h"
@@ -18,12 +19,15 @@ AdminHomePage::AdminHomePage(QWidget *parent) : QWidget(parent), registerUser(nu
     setMinimumSize(800, 500);
     setStyleSheet("background-color: #0d1b2a;");
 
-    // ✅ Initialize TopBar (Logout functionality removed)
     topBar = new TopBar(this);
-
+    stackWidget = new QStackedWidget(this);
+    stackWidget->setContentsMargins(0,0,0,0);
     // ✅ Buttons Grid
-    QWidget *buttonsWidget = new QWidget(this);
-    QGridLayout *buttonsLayout = new QGridLayout(buttonsWidget);
+    QWidget *homePageWidget = new QWidget(this);
+    homePageWidget->setContentsMargins(0,0,0,0);
+    QVBoxLayout *mainLayout = new QVBoxLayout(homePageWidget);
+    QWidget *buttonsWidget =  new QWidget();
+    QGridLayout *buttonsLayout = new QGridLayout();
     buttonsLayout->setContentsMargins(40, 30, 40, 30);
     buttonsLayout->setHorizontalSpacing(25);
     buttonsLayout->setVerticalSpacing(25);
@@ -48,18 +52,25 @@ AdminHomePage::AdminHomePage(QWidget *parent) : QWidget(parent), registerUser(nu
             );
 
         buttonsLayout->addWidget(button, i / 2, i % 2);
-
+        buttonsWidget->setLayout(buttonsLayout);
         // ✅ Connect button click to a generic slot function
         connect(button, &QPushButton::clicked, this, [=]() { handleButtonClick(buttonLabels[i]); });
     }
 
     // ✅ Main Layout
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+
     mainLayout->setContentsMargins(0, 0, 0, 0); // **Remove Margins**
     mainLayout->setSpacing(0); // **Remove Extra Spacing**
     mainLayout->addWidget(topBar);
     mainLayout->addWidget(buttonsWidget);
-    setLayout(mainLayout);
+    homePageWidget->setLayout(mainLayout);
+
+    stackWidget->addWidget(homePageWidget);
+    QVBoxLayout *mainLayoutBox = new QVBoxLayout(this);
+    mainLayoutBox->setContentsMargins(0,0,0,0);
+    mainLayoutBox->setSpacing(0);
+    mainLayoutBox->addWidget(stackWidget);
+    setLayout(mainLayoutBox);
 }
 
 // ✅ Button Handling Function
@@ -69,9 +80,10 @@ void AdminHomePage::handleButtonClick(const QString &buttonText) {
     if (buttonText == "Register User") {
         if (!registerUser) { // Ensure no memory leak
             registerUser = new RegisterUserForm();
+            stackWidget->addWidget(registerUser);
+            connect(registerUser, &RegisterUserForm::backButtonClicked, this, &AdminHomePage::gotoBackPage);
         }
-        this->hide();
-        registerUser->showMaximized();
+        stackWidget->setCurrentWidget(registerUser);
     } else if (buttonText == "All Users") {
         qDebug() << "Opening All Users Page...";
         // Future: Open All Users page
@@ -89,10 +101,13 @@ void AdminHomePage::handleButtonClick(const QString &buttonText) {
         // Future: Open Fee Status update form
     }
 }
+void AdminHomePage::gotoBackPage() {
+    stackWidget->setCurrentIndex(0);
+}
 
 // ✅ Destructor (Prevent Memory Leak)
 AdminHomePage::~AdminHomePage() {
-    if (registerUser) {
-        delete registerUser;
-    }
+
+        delete stackWidget;
+
 }

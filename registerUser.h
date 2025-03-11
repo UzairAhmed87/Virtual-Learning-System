@@ -26,6 +26,8 @@ private:
     QComboBox *roleDropdown;
     QPushButton *submitButton;
     TopBar *topBar;
+signals:
+    void backButtonClicked();
 };
 
 #endif // REGISTERUSERFORM_H

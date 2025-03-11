@@ -2,31 +2,31 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QStackedWidget>
+#include "LoginPage.h"
 #include "AdminHomePage.h"
-#include "DatabaseManager.h"  // Include database manager
 #include "StudentHomePage.h"
 #include "TeacherHomePage.h"
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
-}
-QT_END_NAMESPACE
+#include <QMessageBox>
+#include <QVBoxLayout>
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
-    void openHomePage();
+    void handleLoginSuccess(QString role); // Slot to handle login success
 
 private:
-    Ui::MainWindow *ui;
+    QStackedWidget *stackWidget;
+    LoginPage *loginPage;
     AdminHomePage *adminPage;
     StudentHomePage *studentPage;
     TeacherHomePage *teacherPage;
 };
+
 #endif // MAINWINDOW_H

@@ -21,7 +21,10 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         );
 
     // **Connect Back Button to Close Form**
-    connect(backButton, &QPushButton::clicked, this, &RegisterUserForm::close);
+    connect(backButton, &QPushButton::clicked, this, [=]() {
+        emit backButtonClicked();
+    });
+
 
 
     // Register User Heading

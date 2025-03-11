@@ -19,7 +19,7 @@ set(PROJECT_SOURCES
     main.cpp
     mainwindow.cpp
     mainwindow.h
-    mainwindow.ui
+    LoginPage.ui
     AdminPage.cpp
     AdminHomePage.h
     DatabaseManager.cpp
@@ -30,6 +30,8 @@ set(PROJECT_SOURCES
     TeacherHomePage.h
     registerUser.h
     registerUser.cpp
+    LoginPage.cpp
+    LoginPage.h
     resources.qrc
 )
 
@@ -43,6 +45,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         TopBar.cpp
         registerUser.h
         registerUser.cpp
+        LoginPage.h
+        LoginPage.cpp
     )
 else()
     if(ANDROID)

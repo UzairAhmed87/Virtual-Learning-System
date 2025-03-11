@@ -3,6 +3,7 @@
 TopBar::TopBar(QWidget *parent) : QWidget(parent) {
     setFixedHeight(60);
     setMinimumWidth(800);
+    setContentsMargins(0,0,0,0);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     // ✅ Force background color with stylesheet
