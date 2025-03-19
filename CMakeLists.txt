@@ -33,6 +33,10 @@ set(PROJECT_SOURCES
     LoginPage.cpp
     LoginPage.h
     resources.qrc
+    BackButton.cpp
+    BackButton.h
+    createcourse.cpp
+    createcourse.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -47,6 +51,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         registerUser.cpp
         LoginPage.h
         LoginPage.cpp
+        BackButton.h
+        BackButton.cpp
+        createcourse.h
+        createcourse.cpp
+        allusers.h
+        allusers.cpp
+        ProfilePage.h
+        ProfilePage.cpp
     )
 else()
     if(ANDROID)

@@ -1,11 +1,12 @@
 #include "TopBar.h"
+#include "ProfilePage.h"
+#include "AdminHomePage.h"
 
 TopBar::TopBar(QWidget *parent) : QWidget(parent) {
     setFixedHeight(60);
     setMinimumWidth(800);
     setContentsMargins(0,0,0,0);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
     // ✅ Force background color with stylesheet
     QPalette pal;
     pal.setColor(QPalette::Window, QColor("#1B263B")); // Use Window role instead of Background
@@ -36,6 +37,8 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent) {
         "QPushButton:hover { background-color: rgba(255, 255, 255, 0.1); border-radius: 5px; }"
         );
 
+    connect(homeButton,&QPushButton::clicked,this,&TopBar::onHomeClicked);
+
     // Profile Button
     QPushButton *profileButton = new QPushButton(this);
     QPixmap profilePixmap("images/ProfileIcon.png");
@@ -47,7 +50,7 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent) {
         "QPushButton { border-radius: 20px; background: transparent; border: 2px solid transparent; }"
         "QPushButton:hover { background-color: rgba(255, 255, 255, 0.1); border-radius: 5px; }"
         );
-
+    connect(profileButton,&QPushButton::clicked,this,&TopBar::onProfileClicked);
     // Logout Button
     QPushButton *logoutButton = new QPushButton("Logout", this);
     logoutButton->setCursor(Qt::PointingHandCursor);
@@ -60,4 +63,12 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent) {
     topLayout->addWidget(homeButton);
     topLayout->addWidget(profileButton);
     topLayout->addWidget(logoutButton);
+}
+void TopBar::onProfileClicked(){
+    emit profileClicked();
+}
+void TopBar::onHomeClicked(){
+    qDebug() << "Home button clicked! Emitting signal...";
+    emit homeButtonClicked();
+    qDebug()<< "Signal emitted";
 }

@@ -5,6 +5,7 @@
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
 #include "DatabaseManager.h"
+#include "QCryptographicHash"
 
 LoginPage::LoginPage(QWidget *parent)
     : QWidget(parent)
@@ -52,9 +53,19 @@ void LoginPage::handleLogin() {
     }
 
     QSqlQuery query;
-    query.prepare("SELECT * FROM Users WHERE email = :email AND password = :password AND role = :role");
+    query.prepare("SELECT id, first_name, last_name, email, phone, gender, role, department, course "
+                  "FROM vls_schema.users "
+                  "WHERE email = :email "
+                  "AND password_hash = crypt(:password, password_hash) "
+                  "AND LOWER(role) = LOWER(:role)");
+
     query.bindValue(":email", email);
     query.bindValue(":password", password);
+    query.bindValue(":role", role);
+
+
+    query.bindValue(":email", email);
+    query.bindValue(":password", password); // Use hashed password
     query.bindValue(":role", role);
 
     if (!query.exec()) {
@@ -66,8 +77,9 @@ void LoginPage::handleLogin() {
     }
 
     if (query.next()) {
+        QString firstName = query.value(1).toString();
         mesgBox.setWindowTitle("Login Success");
-        mesgBox.setText("✅ Welcome " + role + "!");
+        mesgBox.setText("✅ Welcome " + firstName + "!");
         mesgBox.setIcon(QMessageBox::Information);
         mesgBox.exec();
         emit loginSuccessful(role);

@@ -13,9 +13,13 @@ public:
     explicit TopBar(QWidget *parent = nullptr);
 
 signals:
-
+    void profileClicked();
+    void homeButtonClicked();
 private:
     QHBoxLayout *topLayout;
+private slots:
+    void onProfileClicked();
+    void onHomeClicked();
 };
 
 #endif // TOPBAR_H

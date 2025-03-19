@@ -17,7 +17,11 @@
 
         // Top Bar
         topBar = new TopBar(this);
+        stackWidget = new QStackedWidget(this);
+        stackWidget->setContentsMargins(0,0,0,0);
 
+        homePageWidget = new QWidget(this);
+        homePageWidget->setContentsMargins(0,0,0,0);
         // Buttons Grid
         QWidget *buttonsWidget = new QWidget(this);
         QGridLayout *buttonsLayout = new QGridLayout(buttonsWidget);
@@ -79,8 +83,20 @@
         mainLayout->setSpacing(0); // **Remove Extra Spacing**
         mainLayout->addWidget(topBar);
         mainLayout->addWidget(buttonsWidget);
-        setLayout(mainLayout);
+        homePageWidget->setLayout(mainLayout);
+        stackWidget->addWidget(homePageWidget);
+        QVBoxLayout *mainLayoutBox = new QVBoxLayout(this);
+        mainLayoutBox->setContentsMargins(0,0,0,0);
+        mainLayoutBox->setSpacing(0);
+        mainLayoutBox->addWidget(stackWidget);
+         connect(topBar,&TopBar::profileClicked,this,&TeacherHomePage::openProfilePage);
+        setLayout(mainLayoutBox);
 
+    }
+    void TeacherHomePage::openProfilePage(){
+        profilePage = new ProfilePage(this);
+        stackWidget->addWidget(profilePage);
+        stackWidget->setCurrentWidget(profilePage);
     }
     TeacherHomePage ::~TeacherHomePage(){
 

@@ -1,6 +1,7 @@
 #include "StudentHomePage.h"
 #include <QApplication>
 #include "TopBar.h"
+#include "ProfilePage.h"
 
 StudentHomePage::StudentHomePage(QWidget *parent) : QWidget(parent) {
     setWindowTitle("Student Home Page");
@@ -9,7 +10,10 @@ StudentHomePage::StudentHomePage(QWidget *parent) : QWidget(parent) {
 
     // Create the top bar
     topBar = new TopBar(this);
-
+    stackWidget = new QStackedWidget(this);
+    stackWidget->setContentsMargins(0,0,0,0);
+    homePageWidget = new QWidget(this);
+    homePageWidget->setContentsMargins(0,0,0,0);
     // Create the buttons grid
     createButtonsGrid();
 
@@ -19,7 +23,15 @@ StudentHomePage::StudentHomePage(QWidget *parent) : QWidget(parent) {
     mainLayout->setSpacing(0); // Remove extra spacing
     mainLayout->addWidget(topBar);
     mainLayout->addWidget(buttonsWidget);
-    setLayout(mainLayout);
+    homePageWidget->setLayout(mainLayout);
+    stackWidget->addWidget(homePageWidget);
+    QVBoxLayout *mainLayoutBox = new QVBoxLayout(this);
+    mainLayoutBox->setContentsMargins(0,0,0,0);
+    mainLayoutBox->setSpacing(0);
+    mainLayoutBox->addWidget(stackWidget);
+
+    connect(topBar,&TopBar::profileClicked,this,&StudentHomePage::openProfilePage);
+    setLayout(mainLayoutBox);
 }
 
 
@@ -51,7 +63,35 @@ void StudentHomePage::createButtonsGrid() {
 
         buttonsLayout->addWidget(button, i / 2, i % 2);
     }
-};
+}
+void StudentHomePage::handleButtonClick(const QString &buttonText) {
+    qDebug() << "Button Clicked:" << buttonText; // Debugging Output
+    if (buttonText == "Lectures") {
+
+
+
+    } else if (buttonText == "Enrolled Courses") {
+
+            qDebug() << "Opening Enrolled courses Page...";
+
+
+        // Future: Open All Users page
+    } else if (buttonText == "Grades") {
+
+
+        // Future: Open Create Course form
+    } else if (buttonText == "Assignments") {
+        qDebug() << "Opening All assignments Page...";
+
+    }}
+void StudentHomePage::gotoBackPage() {
+    stackWidget->setCurrentIndex(0);
+}
+void StudentHomePage::openProfilePage(){
+    profilePage = new ProfilePage(this);
+    stackWidget->addWidget(profilePage);
+    stackWidget->setCurrentWidget(profilePage);
+}
 
 StudentHomePage::~StudentHomePage(){
 

@@ -10,6 +10,8 @@
 #include <QPixmap>
 #include <QSpacerItem>
 #include "TopBar.h"
+#include "ProfilePage.h"
+#include <QStackedWidget>
 
 class StudentHomePage : public QWidget {
     Q_OBJECT
@@ -19,6 +21,9 @@ public:
     ~StudentHomePage();
 private:
     // Top Bar Widgets
+    QWidget *homePageWidget;
+    ProfilePage *profilePage;
+    QStackedWidget *stackWidget;
     QHBoxLayout *topLayout;
     QLabel *logoLabel;
     QPushButton *homeButton;
@@ -33,12 +38,13 @@ private:
     QVBoxLayout *mainLayout;
     TopBar *topBar;
 
-    // Helper function to create the top bar
-    void createTopBar();
-
 
     // Helper function to create the buttons grid
     void createButtonsGrid();
+private slots:
+    void handleButtonClick(const QString &buttonText);
+    void gotoBackPage();
+    void openProfilePage();
 };
 
 #endif // STUDENTHOMEPAGE_H

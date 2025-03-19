@@ -2,8 +2,14 @@
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QMessageBox>
+#include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlError>
 #include "TopBar.h"
-
+#include "DatabaseManager.h"
+#include <QCryptographicHash>
+#include "BackButton.h"
+#include <QDebug>
 
 RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     this->setMinimumSize(800, 500); // Forces window to be 800x500
@@ -38,52 +44,52 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     mainLayout->setSpacing(20);
 
     // **Form Fields**
-    QFormLayout *formLayout = new QFormLayout;
+    QFormLayout *formLayout = new QFormLayout();
     formLayout->setSpacing(15);
 
     QLabel *firstNameLabel = new QLabel("First Name:");
     firstNameLabel->setStyleSheet("font-weight: bold; color: white;");
-    QLineEdit *firstNameField = new QLineEdit;
+    firstNameField = new QLineEdit;
     firstNameField->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     formLayout->addRow(firstNameLabel, firstNameField);
 
     QLabel *lastNameLabel = new QLabel("Last Name:");
     lastNameLabel->setStyleSheet("font-weight: bold; color: white;");
-    QLineEdit *lastNameField = new QLineEdit;
+    lastNameField = new QLineEdit;
     lastNameField->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     formLayout->addRow(lastNameLabel, lastNameField);
 
 
     QLabel *emailLabel = new QLabel("Email:");
     emailLabel->setStyleSheet("font-weight: bold; color: white;");
-    QLineEdit *emailField = new QLineEdit;
+    emailField = new QLineEdit;
     emailField->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     formLayout->addRow(emailLabel, emailField);
 
 
     QLabel *passwordLabel = new QLabel("Password:");
     passwordLabel->setStyleSheet("font-weight: bold; color: white;");
-    QLineEdit *passwordField = new QLineEdit;
+    passwordField = new QLineEdit;
     passwordField->setEchoMode(QLineEdit::Password);
     passwordField->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     formLayout->addRow(passwordLabel, passwordField);
 
     QLabel *phoneLabel = new QLabel("Phone Number:");
     phoneLabel->setStyleSheet("font-weight: bold; color: white;");
-    QLineEdit *phoneField = new QLineEdit;
+    phoneField = new QLineEdit;
     phoneField->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     formLayout->addRow(phoneLabel, phoneField);
 
     QLabel *genderLabel = new QLabel("Gender:");
     genderLabel->setStyleSheet("font-weight: bold; color: white;");
-    QComboBox *genderDropdown = new QComboBox;
+    genderDropdown = new QComboBox;
     genderDropdown->addItems({"Male", "Female", "Prefer Not To Say"});
     genderDropdown->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     formLayout->addRow(genderLabel, genderDropdown);
 
     QLabel *userTypeLabel = new QLabel("User Type:");
     userTypeLabel->setStyleSheet("font-weight: bold; color: white;");
-    QComboBox *userTypeDropdown = new QComboBox;
+    userTypeDropdown = new QComboBox;
     userTypeDropdown->addItems({"Student", "Teacher", "Admin"});
     userTypeDropdown->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     formLayout->addRow(userTypeLabel, userTypeDropdown);
@@ -91,20 +97,20 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     // Create the dropdowns but hide them initially
     QLabel *departmentLabel = new QLabel("Department:");
     departmentLabel->setStyleSheet("font-weight: bold; color: white;");
-    QComboBox *departmentDropdown = new QComboBox;
+    departmentDropdown = new QComboBox;
     departmentDropdown->addItems({"CS", "IT", "SE", "EE"});
     departmentDropdown->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
-    departmentLabel->hide();
-    departmentDropdown->hide();
+    departmentLabel->show();
+    departmentDropdown->show();
 
     QLabel *courseLabel = new QLabel("Course:");
     courseLabel->setStyleSheet("font-weight: bold; color: white;");
-    QComboBox *courseDropdown = new QComboBox;
+    courseDropdown = new QComboBox;
     courseDropdown->addItems({"OOP", "DSA", "AI", "DBMS"});
     courseDropdown->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     courseLabel->hide();
     courseDropdown->hide();
-    connect(userTypeDropdown, &QComboBox::currentTextChanged, [=](const QString &selectedType) {
+    connect(userTypeDropdown, &QComboBox::currentTextChanged, this, [=](const QString &selectedType) {
         if (selectedType == "Student") {
             departmentLabel->show();
             departmentDropdown->show();
@@ -123,8 +129,9 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         }
     });
 
+
     // **Buttons**
-    QPushButton *registerButton = new QPushButton("Register");
+    registerButton = new QPushButton("Register");
     registerButton->setStyleSheet(R"(
     QPushButton {
         background-color: #778da9;
@@ -132,6 +139,7 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         font-size: 16px;
         padding: 12px 24px;
         border-radius: 8px;
+        border:2px solid #778da9;
         font-weight: bold;
     }
     QPushButton:hover {
@@ -141,7 +149,7 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     }
 )");
 
-    QPushButton *resetButton = new QPushButton("Reset");
+    resetButton = new QPushButton("Reset");
     resetButton->setStyleSheet(R"(
     QPushButton {
         background-color: #FF5C5C;
@@ -149,11 +157,11 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         font-size: 16px;
         padding: 12px 24px;
         border-radius: 8px;
-        border: none;
+        border: 2px solid #FF5C5C;
         font-weight: bold;
     }
     QPushButton:hover {
-        background-color: #E04A4A;
+        background-color: #1B263B;
     }
 )");
 
@@ -192,15 +200,7 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
 
 
     setLayout(mainLayout);
-    connect(resetButton, &QPushButton::clicked, this, [=]() {
-        firstNameField->clear();
-        lastNameField->clear();
-        emailField->clear();
-        passwordField->clear();
-        phoneField->clear();
-        userTypeDropdown->setCurrentIndex(0); // Reset dropdown to first item
-        genderDropdown->setCurrentIndex(0);
-    });
+    connect(resetButton, &QPushButton::clicked, this,&RegisterUserForm::reset);
 
 
 
@@ -225,28 +225,134 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     phoneField->setValidator(phoneValidator);
 
     // Password Validation (Manually Checked in Register Button Click)
-    connect(registerButton, &QPushButton::clicked, this, [=]() {
+    connect(registerButton, &QPushButton::clicked, this,[=](){
         QString firstName = firstNameField->text().trimmed();
         QString lastName = lastNameField->text().trimmed();
         QString email = emailField->text().trimmed();
-        QString password = passwordField->text();
+        QString password = passwordField->text().trimmed();
         QString phone = phoneField->text().trimmed();
-        QString userType = userTypeDropdown->currentText();
+        QString gender = genderDropdown->currentText();
+        QString role = userTypeDropdown->currentText();
+        QString department = departmentDropdown->currentText();
+        QString course = courseDropdown->currentText();
+        QMessageBox mesgBox;
+        mesgBox.setStyleSheet(
+            "QMessageBox { background-color: #1b263b; color: white; font-size: 16px; }"
+            "QLabel { color: white; }"
+            "QPushButton { background-color: #778da9; color: white;border:2px solid #778da9; border-radius: 5px; padding: 8px; }"
+            "QPushButton:hover { background-color: transparent; }"
+            );
 
-        // Checking Required Fields
-        if (firstName.isEmpty() ||lastName.isEmpty() || email.isEmpty() || password.isEmpty() || phone.isEmpty()) {
+        // **Checking Required Fields**
+        if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || password.isEmpty() || phone.isEmpty()) {
             QMessageBox::warning(this, "Validation Error", "All fields are required!");
             return;
         }
 
-        // Password Length Check
+        // **Password Length Check**
         if (password.length() < 6) {
             QMessageBox::warning(this, "Validation Error", "Password must be at least 6 characters long!");
             return;
         }
 
-        QMessageBox::information(this, "Success", "User Registered Successfully!");
-    });
+        // **Check if the database is connected**
+        QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
+        if (!db.isOpen()) {
+            QMessageBox::critical(this, "Database Error", "Database connection is not open!");
+            return;
+        }
 
+        // **Check if email already exists**
+        QSqlQuery checkQuery;
+        checkQuery.prepare("SELECT 1 FROM vls_schema.users WHERE email = :email LIMIT 1");
+        checkQuery.addBindValue(email);
+
+        if (!checkQuery.exec()) {
+            QMessageBox::critical(this, "Database Error", "Failed to check existing user: " + checkQuery.lastError().text());
+            return;
+        }
+
+        if (checkQuery.next()) {
+            QMessageBox::warning(this, "Registration Error", "Email is already registered!");
+            return;
+        }
+
+        QString newUniqueID = generateUniqueID(role,department);
+        // **Insert new user**
+        QSqlQuery query;
+        if (role == "Student") {
+            role = role.toLower();
+            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, department , unique_id) "
+                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :department,:unique_id");
+            query.bindValue(":department", department);
+        }
+        else if (role == "Teacher") {
+            role = role.toLower();
+            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, course,unique_id) "
+                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :course,:unique_id");
+            query.bindValue(":course", course);
+        }
+        else {
+            role = role.toLower();
+            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role,unique_id) "
+                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role,:unique_id");
+
+        }
+
+        // Common fields for all roles
+        query.bindValue(":first_name", firstName);
+        query.bindValue(":last_name", lastName);
+        query.bindValue(":email", email);
+        query.bindValue(":password", password);  // Plain password (PostgreSQL will hash it)
+        query.bindValue(":phone", phone);
+        query.bindValue(":gender", gender);
+        query.bindValue(":role", role);
+        query.bindValue(":unique_id",newUniqueID);
+        qDebug()<< "Query: "<<query.executedQuery();
+        qDebug()<<"first_name: " << firstName;
+        qDebug()<< "password: "<<password;
+        if (!query.exec()) {
+            mesgBox.setWindowTitle("Database Error");
+            mesgBox.setText("Query execution failed: " + query.lastError().text());
+            mesgBox.setIcon(QMessageBox::Critical);
+            mesgBox.exec();
+            return;
+        }
+
+        // Success Message
+        mesgBox.setWindowTitle("Success");
+        mesgBox.setText("User registered successfully!");
+        mesgBox.setIcon(QMessageBox::Information);
+        mesgBox.exec();
+        reset();
+
+    });
+}
+QString RegisterUserForm::generateUniqueID(QString role, QString department){
+    QString prefix;
+    if(role=="Student") prefix =department + "-";
+    else if(role=="Teacher") prefix = "TCH-";
+    else prefix = "AD-";
+    QSqlQuery query;
+    query.prepare("SELECT unique_id FROM vls_schema.users WHERE unique_id LIKE :prefix ORDER BY unique_id DESC LIMIT 1");
+    query.bindValue(":prefix",prefix+"%");
+    if(!query.exec()|| !query.next()){
+        return prefix+ "001";
+    }
+    QString lastID = query.value(0).toString();
+    int lastNumber = lastID.section('-',1,1).toInt();
+    lastNumber++;
+    return prefix+ QString("%1").arg(lastNumber,3,10,QChar('0'));
+}
+void RegisterUserForm::reset(){
+    firstNameField->clear();
+    lastNameField->clear();
+    emailField->clear();
+    passwordField->clear();
+    phoneField->clear();
+    userTypeDropdown->setCurrentIndex(0); // Reset dropdown to first item
+    genderDropdown->setCurrentIndex(0);
+}
+RegisterUserForm::~RegisterUserForm(){
 
 }
