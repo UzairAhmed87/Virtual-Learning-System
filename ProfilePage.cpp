@@ -9,12 +9,52 @@
 #include <QFrame>
 #include <QFileDialog>
 #include "TopBar.h"
+#include <QString>
+#include "DatabaseManager.h"
+#include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlError>
+#include <QMessageBox>
+#include <QDebug>
 
-ProfilePage::ProfilePage(QWidget *parent) : QWidget(parent) {
+ProfilePage::ProfilePage(const QString &userEmail,QWidget *parent) : QWidget(parent),email(userEmail) {
     setWindowTitle("Profile Page");
     setMinimumSize(800, 500);
-    topBar = new TopBar(this);
+    topBar =  new TopBar(this);
+    qDebug() << "Email: " << email;
     setStyleSheet("background-color: #0d1b2a;"); // Dark background
+    QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
+    if (!db.isOpen()) {
+        QMessageBox::critical(this, "Database Error", "Database connection is not open!");
+        return;
+    }
+    QSqlQuery query;
+    query.prepare("SELECT unique_id, first_name, last_name,gender,phone,role,department,email,fee_status FROM vls_schema.users WHERE email = :email");
+    query.bindValue(":email",email);
+    if (!query.exec()) {
+        QMessageBox::critical(this, "Database Error", "Failed to retrieve users: " + query.lastError().text());
+        return;
+    }
+    while (query.next()) {
+        uniqueId = query.value("unique_id").toString();
+        firstName = query.value("first_name").toString();
+        lastName = query.value("last_name").toString();
+        role = query.value("role").toString();
+        fullName = firstName + " " + lastName;
+        email = query.value("email").toString();
+        gender = query.value("gender").toString();
+        department = query.value("department").toString();
+        phone = query.value("phone").toString();
+        feeStatus = query.value("fee_status").toString();
+    }
+    QSqlQuery Batchquery;
+    Batchquery.prepare("SELECT EXTRACT(YEAR FROM registration_date) FROM vls_schema.users WHERE email = :email");
+    Batchquery.bindValue(":email", email);
+
+    if (Batchquery.exec() && Batchquery.next()) {
+        batch = Batchquery.value(0).toString();
+        qDebug() << "Registration Year:" << batch;
+    }
 
     // Create the top bar
 
@@ -50,7 +90,7 @@ void ProfilePage::createMainContent() {
 
     // Profile Picture
     profilePictureLabel = new QLabel(mainContent);
-    QPixmap profilePicture("C:/Users/Lenovo/Downloads/VLS/Profile_Icon.png");
+    QPixmap profilePicture("images/ProfileIcon.png");
     profilePicture = profilePicture.scaled(150, 150, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     profilePictureLabel->setPixmap(profilePicture);
     profilePictureLabel->setStyleSheet("border: none;");
@@ -63,7 +103,7 @@ void ProfilePage::createMainContent() {
     nameLayout->setAlignment(Qt::AlignCenter); // Center the name
 
     // Name Label
-    nameLabel = new QLabel("Muhammad Taha Farrukh", mainContent);
+    nameLabel = new QLabel(fullName, mainContent);
     nameLabel->setStyleSheet("color: white; font-size: 24px; font-weight: bold;");
 
     // Add Name to its layout
@@ -80,11 +120,12 @@ void ProfilePage::createMainContent() {
     uploadPictureButton->setStyleSheet(
         "QPushButton {"
         "   background-color: #4169E1; color: white; font-size: 16px; font-weight: bold;"
-        "   border-radius: 5px; padding: 5px 10px; border: none;"
+        "   border-radius: 5px; padding: 5px 10px; border: 2px solid #4169E1;"
         "} "
         "QPushButton:hover {"
         "   background-color: #2d3e50; "
         "} "
+        "QPushButton:pressed { background-color: #1B263B; }"
         );
 
     // Connect Upload Picture Button to a slot
@@ -97,11 +138,12 @@ void ProfilePage::createMainContent() {
     changePasswordButton->setStyleSheet(
         "QPushButton {"
         "   background-color: #4169E1; color: white; font-size: 16px; font-weight: bold;"
-        "   border-radius: 5px; padding: 5px 10px; border: none;"
+        "   border-radius: 5px; padding: 5px 10px; border: 2px solid #4169E1;"
         "} "
         "QPushButton:hover {"
         "   background-color: #2d3e50; "
         "} "
+        "QPushButton:pressed { background-color: #1B263B; }"
         );
 
     // Add buttons to the buttons layout
@@ -133,25 +175,24 @@ void ProfilePage::createMainContent() {
     personalDetailsLabel->setStyleSheet("color: white; font-size: 20px; font-weight: bold; background: transparent; border: none;");
 
     // Add bold labels for Personal Details
-    QLabel *genderLabel = new QLabel("<b>Gender:</b> Male", profileInfoFrame);
+    QLabel *firstNameLabel = new QLabel("<b>First Name: </b>"+firstName, profileInfoFrame);
+    firstNameLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+    QLabel *lastNameLabel = new QLabel("<b>Last Name: </b>"+lastName, profileInfoFrame);
+    lastNameLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+    QLabel *emailLabel = new QLabel("<b>Email: </b>"+email, profileInfoFrame);
+    emailLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+    QLabel *genderLabel = new QLabel("<b>Gender: </b>"+gender, profileInfoFrame);
     genderLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
-
-    QLabel *birthDateLabel = new QLabel("<b>Date Of Birth:</b> 03/03/2005", profileInfoFrame);
-    birthDateLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
-
-    QLabel *addressLabel = new QLabel("<b>Address:</b> DHA Phase 7, Karachi, Pakistan", profileInfoFrame);
-    addressLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
-    addressLabel->setWordWrap(true);
-
-    QLabel *phoneLabel = new QLabel("<b>Phone Number:</b> 0326881239", profileInfoFrame);
+    QLabel *phoneLabel = new QLabel("<b>Phone Number: </b>"+phone, profileInfoFrame);
     phoneLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
     phoneLabel->setWordWrap(true);
 
     // Add widgets to the personal details layout
     personalDetailsLayout->addWidget(personalDetailsLabel);
+    personalDetailsLayout->addWidget(firstNameLabel);
+    personalDetailsLayout->addWidget(lastNameLabel);
+    personalDetailsLayout->addWidget(emailLabel);
     personalDetailsLayout->addWidget(genderLabel);
-    personalDetailsLayout->addWidget(birthDateLabel);
-    personalDetailsLayout->addWidget(addressLabel);
     personalDetailsLayout->addWidget(phoneLabel);
 
     // Enrollment Details Section
@@ -160,16 +201,19 @@ void ProfilePage::createMainContent() {
     classDetailsLabel->setStyleSheet("color: white; font-size: 20px; font-weight: bold; background: transparent; border: none;");
 
     // Add bold labels for Enrollment Details
-    QLabel *IDLabel = new QLabel("<b>Student ID:</b> CT-201", profileInfoFrame);
+    QLabel *IDLabel = new QLabel("<b>ID: </b>"+uniqueId, profileInfoFrame);
     IDLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
 
-    QLabel *roleLabel = new QLabel("<b>Role:</b> Student", profileInfoFrame);
+    QLabel *roleLabel = new QLabel("<b>Role: </b>"+role, profileInfoFrame);
     roleLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
 
-    QLabel *departmentLabel = new QLabel("<b>Department:</b> Computer Science", profileInfoFrame);
+    QLabel *departmentLabel = new QLabel("<b>Department: </b>"+department, profileInfoFrame);
     departmentLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
 
-    QLabel *feeStatusLabel = new QLabel("<b>Fee Status:</b> Paid", profileInfoFrame);
+    QLabel *batchLabel = new QLabel("<b>Batch: </b>"+batch, profileInfoFrame);
+    batchLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+
+    QLabel *feeStatusLabel = new QLabel("<b>Fee Status: </b>"+feeStatus, profileInfoFrame);
     feeStatusLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
 
     // Add widgets to the enrollment details layout
@@ -177,6 +221,7 @@ void ProfilePage::createMainContent() {
     enrollmentDetailsLayout->addWidget(IDLabel);
     enrollmentDetailsLayout->addWidget(roleLabel);
     enrollmentDetailsLayout->addWidget(departmentLabel);
+    enrollmentDetailsLayout->addWidget(batchLabel);
     enrollmentDetailsLayout->addWidget(feeStatusLabel);
 
     // Add both layouts to the profile info layout

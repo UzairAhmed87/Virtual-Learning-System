@@ -10,7 +10,7 @@
 #include "TeacherHomePage.h"
 #include "TopBar.h"
 
-    TeacherHomePage::TeacherHomePage(QWidget *parent) : QWidget(parent) {
+TeacherHomePage::TeacherHomePage(const QString &userEmail,QWidget *parent ) : QWidget(parent),email(userEmail) {
         setWindowTitle("Teacher Home Page");
         setMinimumSize(800, 500);
         setStyleSheet("background-color: #0d1b2a;");
@@ -94,7 +94,7 @@
 
     }
     void TeacherHomePage::openProfilePage(){
-        profilePage = new ProfilePage(this);
+        profilePage = new ProfilePage(email,this);
         stackWidget->addWidget(profilePage);
         stackWidget->setCurrentWidget(profilePage);
     }

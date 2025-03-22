@@ -12,12 +12,13 @@
 #include "TopBar.h"
 #include "ProfilePage.h"
 #include <QStackedWidget>
+#include <QString>
 
 class StudentHomePage : public QWidget {
     Q_OBJECT
 
 public:
-    explicit StudentHomePage(QWidget *parent = nullptr);
+    explicit StudentHomePage(const QString &userEmail="",QWidget *parent = nullptr);
     ~StudentHomePage();
 private:
     // Top Bar Widgets
@@ -37,7 +38,7 @@ private:
     // Main Layout
     QVBoxLayout *mainLayout;
     TopBar *topBar;
-
+    QString email;
 
     // Helper function to create the buttons grid
     void createButtonsGrid();

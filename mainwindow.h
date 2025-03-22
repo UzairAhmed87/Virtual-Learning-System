@@ -19,7 +19,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void handleLoginSuccess(QString role); // Slot to handle login success
+    void handleLoginSuccess(QString role,QString email); // Slot to handle login success
 
 private:
     QStackedWidget *stackWidget;

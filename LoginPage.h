@@ -16,7 +16,7 @@ public:
     ~LoginPage();
 
 signals:
-    void loginSuccessful(QString role);  // Signal emitted when login is successful
+    void loginSuccessful(QString role,QString email);  // Signal emitted when login is successful
 
 private slots:
     void handleLogin();

@@ -3,7 +3,7 @@
 #include "TopBar.h"
 #include "ProfilePage.h"
 
-StudentHomePage::StudentHomePage(QWidget *parent) : QWidget(parent) {
+StudentHomePage::StudentHomePage(const QString &userEmail,QWidget *parent) : QWidget(parent),email(userEmail) {
     setWindowTitle("Student Home Page");
     setMinimumSize(800, 500);
     setStyleSheet("background-color: #0d1b2a;");
@@ -88,7 +88,7 @@ void StudentHomePage::gotoBackPage() {
     stackWidget->setCurrentIndex(0);
 }
 void StudentHomePage::openProfilePage(){
-    profilePage = new ProfilePage(this);
+    profilePage = new ProfilePage(email,this);
     stackWidget->addWidget(profilePage);
     stackWidget->setCurrentWidget(profilePage);
 }

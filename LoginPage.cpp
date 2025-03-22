@@ -53,7 +53,7 @@ void LoginPage::handleLogin() {
     }
 
     QSqlQuery query;
-    query.prepare("SELECT id, first_name, last_name, email, phone, gender, role, department, course "
+    query.prepare("SELECT id, first_name, last_name, email, phone, gender, role, department "
                   "FROM vls_schema.users "
                   "WHERE email = :email "
                   "AND password_hash = crypt(:password, password_hash) "
@@ -62,12 +62,6 @@ void LoginPage::handleLogin() {
     query.bindValue(":email", email);
     query.bindValue(":password", password);
     query.bindValue(":role", role);
-
-
-    query.bindValue(":email", email);
-    query.bindValue(":password", password); // Use hashed password
-    query.bindValue(":role", role);
-
     if (!query.exec()) {
         mesgBox.setWindowTitle("Database Error");
         mesgBox.setText("Query execution failed: " + query.lastError().text());
@@ -82,7 +76,7 @@ void LoginPage::handleLogin() {
         mesgBox.setText("✅ Welcome " + firstName + "!");
         mesgBox.setIcon(QMessageBox::Information);
         mesgBox.exec();
-        emit loginSuccessful(role);
+        emit loginSuccessful(role,email);
     } else {
         mesgBox.setWindowTitle("Login Failed");
         mesgBox.setText("Invalid email, password, or role.");

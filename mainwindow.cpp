@@ -29,25 +29,25 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete loginPage;
-    delete adminPage;
-    delete studentPage;
-    delete teacherPage;
+    if (adminPage) delete adminPage;
+    if (studentPage) delete studentPage;
+    if (teacherPage) delete teacherPage;
 }
 
-void MainWindow::handleLoginSuccess(QString role)
+void MainWindow::handleLoginSuccess(QString role,QString email)
 {
     if (role == "Admin") {
-        adminPage = new AdminHomePage();
+        adminPage = new AdminHomePage(email);
         stackWidget->addWidget(adminPage);
         stackWidget->setCurrentWidget(adminPage);
     }
     else if (role == "Student") {
-        studentPage = new StudentHomePage();
+        studentPage = new StudentHomePage(email);
         stackWidget->addWidget(studentPage);
         stackWidget->setCurrentWidget(studentPage);
     }
     else if (role == "Teacher") {
-        teacherPage = new TeacherHomePage();
+        teacherPage = new TeacherHomePage(email);
         stackWidget->addWidget(teacherPage);
         stackWidget->setCurrentWidget(teacherPage);
     }

@@ -8,16 +8,17 @@
 #include "allusers.h"
 #include "ProfilePage.h"
 #include <QStackedWidget>
+#include <QString>
 
 class AdminHomePage : public QWidget {
     Q_OBJECT
 private slots:
     void handleButtonClick(const QString &buttonText);
     void gotoBackPage();
-    void gotoHomePage();
+    // void gotoHomePage();
     void openProfilePage();
 public:
-    explicit AdminHomePage(QWidget *parent = nullptr);
+    explicit AdminHomePage(const QString &userEmail="",QWidget *parent = nullptr);
     ~AdminHomePage();
 private:
     QWidget *homePageWidget;
@@ -26,6 +27,7 @@ private:
     RegisterUserForm *registerUser;
     createcourse *course;
     AllUsers *users;
+    QString email;
     TopBar *topBar;
 };
 

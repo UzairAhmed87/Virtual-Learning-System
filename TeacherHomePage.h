@@ -5,6 +5,7 @@
 #include "TopBar.h"
 #include "ProfilePage.h"
 #include <QStackedWidget>
+#include <QString>
 class TeacherHomePage : public QWidget {
     Q_OBJECT
 private:
@@ -12,8 +13,9 @@ private:
     QWidget *homePageWidget;
     ProfilePage *profilePage;
     QStackedWidget *stackWidget;
+    QString email;
 public:
-    explicit TeacherHomePage(QWidget *parent = nullptr);
+    explicit TeacherHomePage(const QString &userEmail="",QWidget *parent = nullptr);
     ~TeacherHomePage();
 private slots:
     // void handleButtonClick(const QString &buttonText);

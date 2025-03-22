@@ -18,12 +18,12 @@
 #include "ProfilePage.h"
 #include  "mainwindow.h"
 #include <QTimer>
-AdminHomePage::AdminHomePage(QWidget *parent) : QWidget(parent), registerUser(nullptr) ,course(nullptr),users(nullptr){
+AdminHomePage::AdminHomePage(const QString &userEmail,QWidget *parent) : QWidget(parent), registerUser(nullptr) ,course(nullptr),users(nullptr),email(userEmail){
     setWindowTitle("Admin Home Page");
     setMinimumSize(800, 500);
     setStyleSheet("background-color: #0d1b2a;");
 
-    topBar = new TopBar(this);
+    topBar = new TopBar(this,email);
     stackWidget = new QStackedWidget(this);
     stackWidget->setContentsMargins(0,0,0,0);
     // ✅ Buttons Grid
@@ -82,14 +82,14 @@ AdminHomePage::AdminHomePage(QWidget *parent) : QWidget(parent), registerUser(nu
     }
 
     connect(topBar,&TopBar::profileClicked,this,&AdminHomePage::openProfilePage);
-    bool connected = connect(topBar, &TopBar::homeButtonClicked, this, &AdminHomePage::gotoHomePage, Qt::UniqueConnection);
+    // bool connected = connect(topBar, &TopBar::homeButtonClicked, this, &AdminHomePage::gotoHomePage, Qt::UniqueConnection);
 
 
-    if (connected) {
-        qDebug() << "✅ Signal connected successfully!";
-    } else {
-        qDebug() << "❌ Signal connection failed!";
-    }
+    // if (connected) {
+    //     qDebug() << "✅ Signal connected successfully!";
+    // } else {
+    //     qDebug() << "❌ Signal connection failed!";
+    // }
 
 
     setLayout(mainLayoutBox);
@@ -141,33 +141,29 @@ void AdminHomePage::gotoBackPage() {
     stackWidget->setCurrentIndex(0);
 }
 void AdminHomePage::openProfilePage(){
-    profilePage = new ProfilePage(this);
+    profilePage = new ProfilePage(email,this);
     stackWidget->addWidget(profilePage);
     stackWidget->setCurrentWidget(profilePage);
 }
-void AdminHomePage::gotoHomePage() {
-    qDebug() << "🏠 Home Button Clicked! Going back to home page...";
+// void AdminHomePage::gotoHomePage() {
+//     qDebug() << "🏠 Home Button Clicked! Going back to home page...";
 
-    // Ensure connection remains active
-    connect(topBar, &TopBar::homeButtonClicked, this, &AdminHomePage::gotoHomePage, Qt::UniqueConnection);
+//     // Ensure connection remains active
+//     connect(topBar, &TopBar::homeButtonClicked, this, &AdminHomePage::gotoHomePage, Qt::UniqueConnection);
 
-    if (stackWidget->currentWidget() == homePageWidget) {
-        qDebug() << "✅ Already on the home page. No need to switch.";
-        return;
-    }
+//     if (stackWidget->currentWidget() == homePageWidget) {
+//         qDebug() << "✅ Already on the home page. No need to switch.";
+//         return;
+//     }
 
-    stackWidget->setCurrentWidget(homePageWidget);
-    stackWidget->update();
-    stackWidget->repaint();
-    qDebug() << "✅ Successfully switched to home page!";
-}
+//     stackWidget->setCurrentWidget(homePageWidget);
+//     stackWidget->update();
+//     stackWidget->repaint();
+//     qDebug() << "✅ Successfully switched to home page!";
+// }
 
 
 // ✅ Destructor (Prevent Memory Leak)
 AdminHomePage::~AdminHomePage() {
-    delete registerUser;
-    delete course;
-    delete users;
-    delete profilePage;
     delete stackWidget;
 }

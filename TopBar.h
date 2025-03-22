@@ -7,19 +7,21 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QIcon>
+#include <QString>
 class TopBar : public QWidget {
     Q_OBJECT
 public:
-    explicit TopBar(QWidget *parent = nullptr);
+    explicit TopBar(QWidget *parent = nullptr,const QString &email="");
 
 signals:
-    void profileClicked();
-    void homeButtonClicked();
+    void profileClicked(const QString &email);
+    // void homeButtonClicked();
 private:
     QHBoxLayout *topLayout;
+    QString emailID;
 private slots:
     void onProfileClicked();
-    void onHomeClicked();
+    // void onHomeClicked();
 };
 
 #endif // TOPBAR_H

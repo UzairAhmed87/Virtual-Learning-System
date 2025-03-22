@@ -1,6 +1,10 @@
 #include "createcourse.h"
 #include "BackButton.h"
 #include "TopBar.h"
+#include "DatabaseManager.h"
+#include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlError>
 
 createcourse::createcourse(QWidget *parent) : QWidget(parent) {
     this->setMinimumSize(800, 500); // Forces window to be 800x500
@@ -54,14 +58,32 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
     descriptionField->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     formLayout->addRow(descriptionLabel, descriptionField);
 
+    QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
+    if (!db.isOpen()) {
+        QMessageBox::critical(this, "Database Error", "Database connection is not open!");
+        return;
+    }
+    QSqlQuery query;
+    query.prepare("SELECT unique_id, first_name, last_name FROM vls_schema.users WHERE role = 'teacher'");
 
     QLabel *instructorLabel = new QLabel("Instructor:");
     instructorLabel->setStyleSheet("font-weight: bold; color: white;");
     instructorDropdown = new QComboBox;
-    instructorDropdown->addItems({"Select Instructor", "Sir Muhammad Wajhiuddin", "Sir Adeel Suleman", "Sir Feras Malik", "Sir Uzair Ahmed"});
     instructorDropdown->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
-    formLayout->addRow(instructorLabel,instructorDropdown);
+    if (query.exec()) {
+        instructorDropdown->clear(); // Clear existing items
+        instructorDropdown->addItem("Select Instructor", ""); // Default option (empty value)
 
+        while (query.next()) {
+            QString teacherId = query.value(0).toString(); // Get unique_id (e.g., "TCH-001")
+            QString teacherName = query.value(1).toString() + " " + query.value(2).toString(); // Full name
+
+            instructorDropdown->addItem(teacherName,teacherId); // Store unique_id as item data
+        }
+    } else {
+        qDebug() << "Error fetching instructors:" << query.lastError().text();
+    }
+    formLayout->addRow(instructorLabel,instructorDropdown);
     QLabel *departmentLabel = new QLabel("Department:");
     departmentLabel->setStyleSheet("font-weight: bold; color: white;");
     departmentDropdown = new QComboBox;
@@ -74,19 +96,19 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
     QPushButton *registerButton = new QPushButton("Create");
     registerButton->setStyleSheet(R"(
     QPushButton {
-        background-color: #778da9;
-        color: white;
+        background-color: #4169E1;
         font-size: 16px;
         padding: 12px 24px;
         border-radius: 8px;
-        border:2px solid #778da9;
+        border:2px solid #4169E1;
         font-weight: bold;
     }
     QPushButton:hover {
 
-        background-color: #1B263B;
+        background-color: transparent;
 
     }
+    QPushButton:pressed { background-color: #1B263B; }
 )");
 
     QPushButton *resetButton = new QPushButton("Reset");
@@ -101,8 +123,9 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
         font-weight: bold;
     }
     QPushButton:hover {
-        background-color: #1B263B;
+        background: transparent;
     }
+    QPushButton:pressed { background-color: #1B263B; }
 )");
 
 
@@ -164,6 +187,15 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
         QString courseName = courseNameField->text().trimmed();
         QString courseCode = courseCodeField->text().trimmed();
         QString description = descriptionField->text().trimmed();
+        QString department =  departmentDropdown->currentText();
+        QString teacherId = instructorDropdown->currentData().toString();
+        QMessageBox mesgBox;
+        mesgBox.setStyleSheet(
+            "QMessageBox { background-color: #1b263b; color: white; font-size: 16px; }"
+            "QLabel { color: white; }"
+            "QPushButton { background-color: #778da9; color: white;border:2px solid #778da9; border-radius: 5px; padding: 8px; }"
+            "QPushButton:hover { background-color: transparent; }"
+            );
 
         // Checking Required Fields
         if (courseName.isEmpty() ||courseCode.isEmpty() || description.isEmpty()) {
@@ -174,8 +206,35 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
             QMessageBox::warning(this, "Validation Error", "Please select an instructor and department!");
             return;
         }
+        QSqlQuery checkQuery;
+        checkQuery.prepare("SELECT 1 FROM vls_schema.courses WHERE course_code = :courseCode LIMIT 1");
+        checkQuery.addBindValue(courseCode);
 
+        if (!checkQuery.exec()) {
+            QMessageBox::critical(this, "Database Error", "Failed to check existing user: " + checkQuery.lastError().text());
+            return;
+        }
 
+        if (checkQuery.next()) {
+            QMessageBox::warning(this, "Registration Error", "Course code already exists!");
+            return;
+        }
+        QSqlQuery registerQuery;
+        registerQuery.prepare("INSERT INTO vls_schema.courses (course_name, course_code, description, department, teacher_id) "
+                      "SELECT :courseName, :courseCode, :description, :department, :teacherId");
+
+        registerQuery.bindValue(":courseName",courseName);
+        registerQuery.bindValue(":courseCode",courseCode);
+        registerQuery.bindValue(":description",description);
+        registerQuery.bindValue(":department",department);
+        registerQuery.bindValue(":teacherId",teacherId);
+        if (!registerQuery.exec()) {
+            mesgBox.setWindowTitle("Database Error");
+            mesgBox.setText("Query execution failed: " + registerQuery.lastError().text());
+            mesgBox.setIcon(QMessageBox::Critical);
+            mesgBox.exec();
+            return;
+        }
         QMessageBox::information(this, "Success", "Course Created Successfully!");
         reset();
     });

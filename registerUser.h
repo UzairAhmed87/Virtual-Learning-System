@@ -34,7 +34,6 @@ private:
     QComboBox *genderDropdown;
     QComboBox *userTypeDropdown;
     QComboBox *departmentDropdown;
-    QComboBox *courseDropdown;
     QLineEdit *emailField;
     QLineEdit *passwordField;
     QPushButton *registerButton;

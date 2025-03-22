@@ -2,7 +2,7 @@
 #include "ProfilePage.h"
 #include "AdminHomePage.h"
 
-TopBar::TopBar(QWidget *parent) : QWidget(parent) {
+TopBar::TopBar(QWidget *parent,const QString &email) : QWidget(parent),emailID(email) {
     setFixedHeight(60);
     setMinimumWidth(800);
     setContentsMargins(0,0,0,0);
@@ -37,7 +37,7 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent) {
         "QPushButton:hover { background-color: rgba(255, 255, 255, 0.1); border-radius: 5px; }"
         );
 
-    connect(homeButton,&QPushButton::clicked,this,&TopBar::onHomeClicked);
+    // connect(homeButton,&QPushButton::clicked,this,&TopBar::onHomeClicked);
 
     // Profile Button
     QPushButton *profileButton = new QPushButton(this);
@@ -55,8 +55,9 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent) {
     QPushButton *logoutButton = new QPushButton("Logout", this);
     logoutButton->setCursor(Qt::PointingHandCursor);
     logoutButton->setStyleSheet(
-        "QPushButton { color: #1b263b; background-color: #778da9; border: 2px solid #778da9; font-size: 16px; border-radius: 5px; }"
-        "QPushButton:hover { color: white; background: transparent; }"
+        "QPushButton { color: white; background-color: #1E90FF; border: 2px solid #1E90FF;font-weight:bold; font-size: 16px; border-radius: 5px; }"
+        "QPushButton:hover { background: transparent; }"
+        "QPushButton:pressed { background-color: #1B263B; }"
         );
 
     topLayout->addStretch();
@@ -65,10 +66,10 @@ TopBar::TopBar(QWidget *parent) : QWidget(parent) {
     topLayout->addWidget(logoutButton);
 }
 void TopBar::onProfileClicked(){
-    emit profileClicked();
+    emit profileClicked(emailID);
 }
-void TopBar::onHomeClicked(){
-    qDebug() << "Home button clicked! Emitting signal...";
-    emit homeButtonClicked();
-    qDebug()<< "Signal emitted";
-}
+// void TopBar::onHomeClicked(){
+//     qDebug() << "Home button clicked! Emitting signal...";
+//     emit homeButtonClicked();
+//     qDebug()<< "Signal emitted";
+// }

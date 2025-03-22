@@ -8,12 +8,13 @@
 #include <QPushButton>
 #include <QPixmap>
 #include "TopBar.h"
+#include <QString>
 
 class ProfilePage : public QWidget {
     Q_OBJECT
 
 public:
-    explicit ProfilePage(QWidget *parent = nullptr);
+    explicit ProfilePage(const QString &email,QWidget *parent = nullptr);
 
 
 public slots:
@@ -30,6 +31,17 @@ private:
     QLabel *nameLabel;
     QLabel *emailLabel;
     QLabel *enrollmentIdLabel;
+    QString uniqueId;
+    QString role;
+    QString email;
+    QString gender;
+    QString department;
+    QString phone;
+    QString fullName;
+    QString feeStatus;
+    QString batch;
+    QString firstName;
+    QString lastName;
     TopBar *topBar;
 
     // Helper function to create the main content

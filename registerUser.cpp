@@ -102,30 +102,13 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     departmentDropdown->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
     departmentLabel->show();
     departmentDropdown->show();
-
-    QLabel *courseLabel = new QLabel("Course:");
-    courseLabel->setStyleSheet("font-weight: bold; color: white;");
-    courseDropdown = new QComboBox;
-    courseDropdown->addItems({"OOP", "DSA", "AI", "DBMS"});
-    courseDropdown->setStyleSheet("background-color: #1B263B; color: white; padding: 10px; border-radius: 5px;");
-    courseLabel->hide();
-    courseDropdown->hide();
     connect(userTypeDropdown, &QComboBox::currentTextChanged, this, [=](const QString &selectedType) {
         if (selectedType == "Student") {
             departmentLabel->show();
             departmentDropdown->show();
-            courseLabel->hide();
-            courseDropdown->hide();
-        } else if (selectedType == "Teacher") {
-            courseLabel->show();
-            courseDropdown->show();
-            departmentLabel->hide();
-            departmentDropdown->hide();
         } else {
             departmentLabel->hide();
             departmentDropdown->hide();
-            courseLabel->hide();
-            courseDropdown->hide();
         }
     });
 
@@ -134,19 +117,20 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     registerButton = new QPushButton("Register");
     registerButton->setStyleSheet(R"(
     QPushButton {
-        background-color: #778da9;
+        background-color: #1E90FF;
         color: white;
         font-size: 16px;
         padding: 12px 24px;
         border-radius: 8px;
-        border:2px solid #778da9;
+        border:2px solid #1E90FF;
         font-weight: bold;
     }
     QPushButton:hover {
 
-        background-color: #1B263B;
+        background: transparent;
 
     }
+    QPushButton:pressed { background-color: #1B263B; }
 )");
 
     resetButton = new QPushButton("Reset");
@@ -161,8 +145,9 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         font-weight: bold;
     }
     QPushButton:hover {
-        background-color: #1B263B;
+        background-color: transparent;
     }
+    QPushButton:pressed { background-color: #1B263B; }
 )");
 
 
@@ -188,7 +173,6 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     buttonLayout->setSpacing(15);
 
     formLayout->addRow(departmentLabel, departmentDropdown);
-    formLayout->addRow(courseLabel, courseDropdown);
     mainLayout->addWidget(topBar,0, Qt::AlignTop);
     mainLayout->addWidget(backButton, 0, Qt::AlignLeft);
     mainLayout->addWidget(headingLabel, 0, Qt::AlignTop);
@@ -234,7 +218,6 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         QString gender = genderDropdown->currentText();
         QString role = userTypeDropdown->currentText();
         QString department = departmentDropdown->currentText();
-        QString course = courseDropdown->currentText();
         QMessageBox mesgBox;
         mesgBox.setStyleSheet(
             "QMessageBox { background-color: #1b263b; color: white; font-size: 16px; }"
@@ -282,15 +265,10 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         QSqlQuery query;
         if (role == "Student") {
             role = role.toLower();
-            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, department , unique_id) "
-                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :department,:unique_id");
+            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, department , unique_id,fee_status) "
+                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :department,:unique_id,:fee_status");
+            query.bindValue(":fee_status","Paid");
             query.bindValue(":department", department);
-        }
-        else if (role == "Teacher") {
-            role = role.toLower();
-            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, course,unique_id) "
-                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :course,:unique_id");
-            query.bindValue(":course", course);
         }
         else {
             role = role.toLower();
@@ -352,6 +330,7 @@ void RegisterUserForm::reset(){
     phoneField->clear();
     userTypeDropdown->setCurrentIndex(0); // Reset dropdown to first item
     genderDropdown->setCurrentIndex(0);
+    departmentDropdown->setCurrentIndex(0);
 }
 RegisterUserForm::~RegisterUserForm(){
 

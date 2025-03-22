@@ -4,7 +4,10 @@
 #include <QPropertyAnimation>
 #include <QMessageBox>
 #include <QEvent>
-
+#include "DatabaseManager.h"
+#include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlError>
 
 
 AllUsers::AllUsers(QWidget *parent) : QWidget(parent) {
@@ -16,17 +19,55 @@ AllUsers::AllUsers(QWidget *parent) : QWidget(parent) {
 void AllUsers::setupUI() {
     this->setStyleSheet("background-color: #0D1B2A;");  // Dark blue background
     topBar = new TopBar(this);
+    QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
+    if (!db.isOpen()) {
+        QMessageBox::critical(this, "Database Error", "Database connection is not open!");
+        return;
+    }
+    QSqlQuery teacherQuery;
+    teacherQuery.prepare("SELECT unique_id, first_name, last_name,email,gender,department,fee_status,phone FROM vls_schema.users WHERE role = 'teacher'");
+    if (!teacherQuery.exec()) {
+        QMessageBox::critical(this, "Database Error", "Failed to retrieve users: " + teacherQuery.lastError().text());
+        return;
+    }
+    while (teacherQuery.next()) {
+        QString uniqueId = teacherQuery.value("unique_id").toString();
+        QString firstName = teacherQuery.value("first_name").toString();
+        QString lastName = teacherQuery.value("last_name").toString();
+        QString fullName = firstName + " " + lastName;
+        QString email = teacherQuery.value("email").toString();
+        QString gender = teacherQuery.value("gender").toString();
+        // QString department = "N/A";
+        // QString feeStatus = teacherQuery.value("fee_status").toString();
+        QString phone = teacherQuery.value("phone").toString();
+        qDebug() << "Gender fetched:" << gender;
+        // Format and store the data
+        teachers << QString("%1, %2 , %3, %4, %5")
+                        .arg(uniqueId, fullName, gender, email,phone);
+    }
+
     totalUsersLabel = new QLabel("Total Users: 0", this);
+    QSqlQuery studentQuery;
+    studentQuery.prepare("SELECT unique_id, first_name, last_name,email,gender,department,fee_status,phone FROM vls_schema.users WHERE role = 'student'");
+    if (!studentQuery.exec()) {
+        QMessageBox::critical(this, "Database Error", "Failed to retrieve users: " + studentQuery.lastError().text());
+        return;
+    }
+    while (studentQuery.next()) {
+        QString uniqueId = studentQuery.value("unique_id").toString();
+        QString firstName = studentQuery.value("first_name").toString();
+        QString lastName = studentQuery.value("last_name").toString();
+        QString fullName = firstName + " " + lastName;
+        QString email = studentQuery.value("email").toString();
+        QString gender = studentQuery.value("gender").toString();
+        QString department = studentQuery.value("department").toString();
+        QString feeStatus = studentQuery.value("fee_status").toString();
+        QString phone = studentQuery.value("phone").toString();
 
-    // **Dummy Data**
-    students << "001,John Doe,Male,Computer Science,john@vls.com"
-             << "002,Jane Smith,Female,Mathematics,jane@vls.com"
-             << "003,Alice Johnson,Female,Physics,alice@vls.com";
-
-
-    teachers << "T01,Dr. Brown,Male,Machine Learning,brown@vls.com"
-             << "T02,Ms. Green,Female,Algorithms,green@vls.com"
-             << "T03,Mr. White,Male,Data Structures,blue@vls.com";
+        // Format and store the data
+        students << QString("%1, %2, %3, %4, %5,%6,%7")
+                        .arg(uniqueId, fullName, gender, department, email,phone,feeStatus);
+    }
 
     QPushButton *backButton = new QPushButton;
     backButton->setIcon(QIcon("images/back_arrow.png")); // Use an appropriate left arrow icon
@@ -112,8 +153,8 @@ void AllUsers::setupUI() {
     filterBtn->setContentsMargins(0,0,20,0);
 
     // **Table Setup**
-    table = new QTableWidget(0, 6, this);
-    table->setHorizontalHeaderLabels({"ID", "Name", "Gender", "Department","Email","Actions"});
+    table = new QTableWidget(0, 8, this);
+    table->setHorizontalHeaderLabels({"ID", "Name", "Gender", "Department","Email","Phone","Fee Status","Actions"});
     table->setStyleSheet("background-color: #1B263B; color: white; font-size: 14px;");
     table->horizontalHeader()->setStyleSheet("background-color: #162C5D; color: white; font-weight: bold;");
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -191,12 +232,34 @@ void AllUsers::populateTable(const QStringList &data) {
 
         // Create Update button
         QPushButton *updateBtn = new QPushButton("Update");
-        updateBtn->setStyleSheet("background: green");
+        updateBtn->setStyleSheet(R"(
+    QPushButton {
+        background-color: #3CB371;
+        color: white;
+        border:2px solid #3CB371;
+        border-radius: 8px;
+        padding : 6px 12px;
+        font-weight: semi-bold;
+    }
+    QPushButton:hover {
+        background-color: #1B263B;
+    })");
         connect(updateBtn, &QPushButton::clicked, this, [this, row]() { updateUser(row); });
 
         // Create Delete button
         QPushButton *deleteBtn = new QPushButton("Delete");
-        deleteBtn->setStyleSheet("background: #FF5C5C");
+        deleteBtn->setStyleSheet(R"(
+    QPushButton {
+        background-color: #FF5C5C;
+        color: white;
+        border:2px solid #FF5C5C;
+        border-radius: 8px;
+        padding : 6px 12px;
+        font-weight: semi-bold;
+    }
+    QPushButton:hover {
+        background-color: #1B263B;
+    })");
         connect(deleteBtn, &QPushButton::clicked, this, [this, row]() { deleteUser(row); });
 
         // Add buttons to a widget
@@ -245,8 +308,12 @@ void AllUsers::updateUser(int row) {
 void AllUsers::switchCategory(const QString &category) {
     currentCategory = category;
     if (category == "Students") {
+        table->setColumnCount(8); // Adjust columns for Students
+        table->setHorizontalHeaderLabels({"ID", "Name", "Gender", "Department", "Email", "Phone", "Fee Status", "Actions"});
         populateTable(students);
     } else if (category == "Teachers") {
+        table->setColumnCount(6);
+        table->setHorizontalHeaderLabels({"ID", "Name", "Gender","Email","Phone","Actions"});
         populateTable(teachers);
     }
     updateUserCount(); // Update count when switching categories
