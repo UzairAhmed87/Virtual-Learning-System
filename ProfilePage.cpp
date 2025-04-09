@@ -17,11 +17,10 @@
 #include <QMessageBox>
 #include <QDebug>
 
-ProfilePage::ProfilePage(const QString &userEmail,QWidget *parent) : QWidget(parent),email(userEmail) {
+ProfilePage::ProfilePage(const QString &userEmail,QWidget *parent,QWidget *topBar) : QWidget(parent),email(userEmail) {
     setWindowTitle("Profile Page");
     setMinimumSize(800, 500);
-    topBar =  new TopBar(this);
-    qDebug() << "Email: " << email;
+    // topBar =  new TopBar(this);
     setStyleSheet("background-color: #0d1b2a;"); // Dark background
     QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
     if (!db.isOpen()) {
@@ -47,6 +46,7 @@ ProfilePage::ProfilePage(const QString &userEmail,QWidget *parent) : QWidget(par
         phone = query.value("phone").toString();
         feeStatus = query.value("fee_status").toString();
     }
+    if(role == "student"){
     QSqlQuery Batchquery;
     Batchquery.prepare("SELECT EXTRACT(YEAR FROM registration_date) FROM vls_schema.users WHERE email = :email");
     Batchquery.bindValue(":email", email);
@@ -54,6 +54,7 @@ ProfilePage::ProfilePage(const QString &userEmail,QWidget *parent) : QWidget(par
     if (Batchquery.exec() && Batchquery.next()) {
         batch = Batchquery.value(0).toString();
         qDebug() << "Registration Year:" << batch;
+    }
     }
 
     // Create the top bar
@@ -115,15 +116,15 @@ void ProfilePage::createMainContent() {
 
     // Upload Picture Button
     QPushButton *uploadPictureButton = new QPushButton("Upload Picture", mainContent);
-    uploadPictureButton->setFixedSize(150, 40);
+    uploadPictureButton->setMinimumSize(150, 40);
     uploadPictureButton->setCursor(Qt::PointingHandCursor);
     uploadPictureButton->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4169E1; color: white; font-size: 16px; font-weight: bold;"
-        "   border-radius: 5px; padding: 5px 10px; border: 2px solid #4169E1;"
+        "   background-color: #1E90FF; color: white; font-size: 16px; font-weight: bold;"
+        "   border-radius: 5px; padding: 5px 10px; border: 2px solid #1E90FF;"
         "} "
         "QPushButton:hover {"
-        "   background-color: #2d3e50; "
+        "   background: transparent; "
         "} "
         "QPushButton:pressed { background-color: #1B263B; }"
         );
@@ -133,15 +134,15 @@ void ProfilePage::createMainContent() {
 
     // Change Password Button
     QPushButton *changePasswordButton = new QPushButton("Change Password", mainContent);
-    changePasswordButton->setFixedSize(150, 40);
+    changePasswordButton->setMinimumSize(150, 40);
     changePasswordButton->setCursor(Qt::PointingHandCursor);
     changePasswordButton->setStyleSheet(
         "QPushButton {"
-        "   background-color: #4169E1; color: white; font-size: 16px; font-weight: bold;"
-        "   border-radius: 5px; padding: 5px 10px; border: 2px solid #4169E1;"
+        "   background-color: #1E90FF; color: white; font-size: 16px; font-weight: bold;"
+        "   border-radius: 5px; padding: 5px 10px; border: 2px solid #1E90FF;"
         "} "
         "QPushButton:hover {"
-        "   background-color: #2d3e50; "
+        "   background: transparent; "
         "} "
         "QPushButton:pressed { background-color: #1B263B; }"
         );
@@ -197,7 +198,7 @@ void ProfilePage::createMainContent() {
 
     // Enrollment Details Section
     QVBoxLayout *enrollmentDetailsLayout = new QVBoxLayout();
-    QLabel *classDetailsLabel = new QLabel("ENROLLMENT DETAILS", profileInfoFrame);
+    QLabel *classDetailsLabel = new QLabel(role.toUpper()+" DETAILS", profileInfoFrame);
     classDetailsLabel->setStyleSheet("color: white; font-size: 20px; font-weight: bold; background: transparent; border: none;");
 
     // Add bold labels for Enrollment Details
@@ -206,6 +207,10 @@ void ProfilePage::createMainContent() {
 
     QLabel *roleLabel = new QLabel("<b>Role: </b>"+role, profileInfoFrame);
     roleLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+    enrollmentDetailsLayout->addWidget(classDetailsLabel);
+    enrollmentDetailsLayout->addWidget(IDLabel);
+    enrollmentDetailsLayout->addWidget(roleLabel);
+    if(role == "student"){
 
     QLabel *departmentLabel = new QLabel("<b>Department: </b>"+department, profileInfoFrame);
     departmentLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
@@ -215,14 +220,13 @@ void ProfilePage::createMainContent() {
 
     QLabel *feeStatusLabel = new QLabel("<b>Fee Status: </b>"+feeStatus, profileInfoFrame);
     feeStatusLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
-
-    // Add widgets to the enrollment details layout
-    enrollmentDetailsLayout->addWidget(classDetailsLabel);
-    enrollmentDetailsLayout->addWidget(IDLabel);
-    enrollmentDetailsLayout->addWidget(roleLabel);
     enrollmentDetailsLayout->addWidget(departmentLabel);
     enrollmentDetailsLayout->addWidget(batchLabel);
     enrollmentDetailsLayout->addWidget(feeStatusLabel);
+    }
+    // Add widgets to the enrollment details layout
+
+
 
     // Add both layouts to the profile info layout
     profileInfoLayout->addLayout(personalDetailsLayout);

@@ -15,13 +15,14 @@ public:
 
 signals:
     void profileClicked(const QString &email);
-    // void homeButtonClicked();
+    void homeButtonClicked();
+    void logoutClicked();
 private:
     QHBoxLayout *topLayout;
     QString emailID;
 private slots:
     void onProfileClicked();
-    // void onHomeClicked();
+    void onHomeClicked();
 };
 
 #endif // TOPBAR_H

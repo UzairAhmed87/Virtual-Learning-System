@@ -14,7 +14,7 @@ class ProfilePage : public QWidget {
     Q_OBJECT
 
 public:
-    explicit ProfilePage(const QString &email,QWidget *parent = nullptr);
+    explicit ProfilePage(const QString &email,QWidget *parent = nullptr,QWidget *topBar=nullptr);
 
 
 public slots:
@@ -42,7 +42,7 @@ private:
     QString batch;
     QString firstName;
     QString lastName;
-    TopBar *topBar;
+    // TopBar *topBar;
 
     // Helper function to create the main content
     void createMainContent();

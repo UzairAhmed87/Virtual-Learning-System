@@ -17,8 +17,9 @@
 #include "allusers.h"
 #include "ProfilePage.h"
 #include  "mainwindow.h"
+#include "enrollStudent.h"
 #include <QTimer>
-AdminHomePage::AdminHomePage(const QString &userEmail,QWidget *parent) : QWidget(parent), registerUser(nullptr) ,course(nullptr),users(nullptr),email(userEmail){
+AdminHomePage::AdminHomePage(const QString &userEmail,QWidget *parent) : QWidget(parent), registerUser(nullptr) ,course(nullptr),users(nullptr),allcourses(nullptr),email(userEmail),enroll(nullptr),profilePage(nullptr){
     setWindowTitle("Admin Home Page");
     setMinimumSize(800, 500);
     setStyleSheet("background-color: #0d1b2a;");
@@ -30,7 +31,7 @@ AdminHomePage::AdminHomePage(const QString &userEmail,QWidget *parent) : QWidget
 
    homePageWidget = new QWidget(this);
     homePageWidget->setContentsMargins(0,0,0,0);
-    QVBoxLayout *mainLayout = new QVBoxLayout(homePageWidget);
+    mainLayout = new QVBoxLayout(homePageWidget);
     QWidget *buttonsWidget =  new QWidget();
     QGridLayout *buttonsLayout = new QGridLayout();
     buttonsLayout->setContentsMargins(40, 30, 40, 30);
@@ -82,16 +83,12 @@ AdminHomePage::AdminHomePage(const QString &userEmail,QWidget *parent) : QWidget
     }
 
     connect(topBar,&TopBar::profileClicked,this,&AdminHomePage::openProfilePage);
-    // bool connected = connect(topBar, &TopBar::homeButtonClicked, this, &AdminHomePage::gotoHomePage, Qt::UniqueConnection);
-
-
-    // if (connected) {
-    //     qDebug() << "✅ Signal connected successfully!";
-    // } else {
-    //     qDebug() << "❌ Signal connection failed!";
-    // }
-
-
+    connect(topBar, &TopBar::homeButtonClicked, this, &AdminHomePage::gotoHomePage);
+    // connect(topBar, &TopBar::logoutClicked, this, &AdminHomePage::handleLogout);
+    connect(topBar, &TopBar::logoutClicked, this, [this]() {
+        emit logoutRequested();
+        qDebug()<<"Logout signal emitted";
+    });
     setLayout(mainLayoutBox);
 
 }
@@ -101,68 +98,98 @@ void AdminHomePage::handleButtonClick(const QString &buttonText) {
     qDebug() << "Button Clicked:" << buttonText; // Debugging Output
     if (buttonText == "Register User") {
         if (!registerUser) { // Ensure no memory leak
-            registerUser = new RegisterUserForm();
+            registerUser = new RegisterUserForm(this,topBar);
             stackWidget->addWidget(registerUser);
             connect(registerUser, &RegisterUserForm::backButtonClicked, this, &AdminHomePage::gotoBackPage);
         }
+        topBar->setParent(registerUser);
+        qDebug() << "TopBar Parent:" << topBar->parent();
         stackWidget->setCurrentWidget(registerUser);
+
     } else if (buttonText == "All Users") {
         if (!users) { // Ensure no memory leak
-            users = new AllUsers();
+            users = new AllUsers(this,topBar);
             stackWidget->addWidget(users);
              qDebug() << "Opening All Users Page...";
             connect(users, &AllUsers::backButtonClicked, this, &AdminHomePage::gotoBackPage);
         }
+        topBar->setParent(users);
+        qDebug() << "TopBar Parent:" << topBar->parent();
         stackWidget->setCurrentWidget(users);
 
         // Future: Open All Users page
     } else if (buttonText == "Create Course") {
         if (!course) { // Ensure no memory leak
-            course = new createcourse();
+            course = new createcourse(this,topBar);
             stackWidget->addWidget(course);
              qDebug() << "Opening Create Course Form...";
             connect(course, &createcourse::backButtonClicked, this, &AdminHomePage::gotoBackPage);
         }
+        topBar->setParent(course);
+        qDebug() << "TopBar Parent:" << topBar->parent();
         stackWidget->setCurrentWidget(course);
 
         // Future: Open Create Course form
     } else if (buttonText == "All Courses") {
-        qDebug() << "Opening All Courses Page...";
-        // Future: Open All Courses page
+        if(!allcourses)
+        {
+            allcourses = new CourseWidget("",this,topBar);
+            stackWidget->addWidget(allcourses);
+             qDebug() << "Opening All Courses Page...";
+            connect(allcourses, &CourseWidget::backButtonClicked, this, &AdminHomePage::gotoBackPage);
+        }
+        topBar->setParent(allcourses);
+        qDebug() << "TopBar Parent:" << topBar->parent();
+        stackWidget->setCurrentWidget(allcourses);
     } else if (buttonText == "Enroll Student") {
-        qDebug() << "Opening Enrollment Page...";
-        // Future: Open Enrollment page
+        if(!enroll){
+            enroll = new EnrollStudent(this,topBar);
+            stackWidget->addWidget(enroll);
+            qDebug() << "Opening Enrollment Page...";
+            connect(enroll, &EnrollStudent::backButtonClicked, this, &AdminHomePage::gotoBackPage);
+        }
+        topBar->setParent(enroll);
+        qDebug() << "TopBar Parent:" << topBar->parent();
+        stackWidget->setCurrentWidget(enroll);
+
     } else if (buttonText == "Update Fee Status") {
         qDebug() << "Opening Fee Status Update Form...";
         // Future: Open Fee Status update form
     }
 }
 void AdminHomePage::gotoBackPage() {
+    topBar->setParent(homePageWidget);
+    topBar->move(0, 0);
+    topBar->show();
+    mainLayout->insertWidget(0, topBar);  // Add this line to properly position the topBar
+
     stackWidget->setCurrentIndex(0);
 }
 void AdminHomePage::openProfilePage(){
-    profilePage = new ProfilePage(email,this);
-    stackWidget->addWidget(profilePage);
+    if(!profilePage)
+    {
+        profilePage = new ProfilePage(email,this,topBar);
+        stackWidget->addWidget(profilePage);
+    }
+    topBar->setParent(profilePage);
     stackWidget->setCurrentWidget(profilePage);
 }
-// void AdminHomePage::gotoHomePage() {
-//     qDebug() << "🏠 Home Button Clicked! Going back to home page...";
+void AdminHomePage::gotoHomePage() {
+    qDebug() << "🏠 Home Button Clicked! Going back to home page...";
+    if (stackWidget->currentWidget() == homePageWidget) {
+        qDebug() << "✅ Already on the home page. No need to switch.";
+        return;
+    }
 
-//     // Ensure connection remains active
-//     connect(topBar, &TopBar::homeButtonClicked, this, &AdminHomePage::gotoHomePage, Qt::UniqueConnection);
-
-//     if (stackWidget->currentWidget() == homePageWidget) {
-//         qDebug() << "✅ Already on the home page. No need to switch.";
-//         return;
-//     }
-
-//     stackWidget->setCurrentWidget(homePageWidget);
-//     stackWidget->update();
-//     stackWidget->repaint();
-//     qDebug() << "✅ Successfully switched to home page!";
-// }
-
-
+    // FIX: Ensure proper reparenting of topBar
+    if (topBar->parent() != homePageWidget) {
+        topBar->setParent(homePageWidget);
+        topBar->move(0, 0);
+        topBar->show();
+        mainLayout->insertWidget(0, topBar);
+    }
+    stackWidget->setCurrentWidget(homePageWidget);
+}
 // ✅ Destructor (Prevent Memory Leak)
 AdminHomePage::~AdminHomePage() {
     delete stackWidget;

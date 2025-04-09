@@ -5,12 +5,13 @@
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
+#include "mesgboxutil.h"
 
-createcourse::createcourse(QWidget *parent) : QWidget(parent) {
+createcourse::createcourse(QWidget *parent,QWidget *topbar) : QWidget(parent) {
     this->setMinimumSize(800, 500); // Forces window to be 800x500
 
     setStyleSheet("background-color: #0D1B2A; color: white; font-size: 16px;");
-    topbar = new TopBar(this);
+    // topbar = new TopBar(this);
     QPushButton *backButton = new QPushButton;
     backButton->setIcon(QIcon("images/back_arrow.png")); // Use an appropriate left arrow icon
     backButton->setIconSize(QSize(30, 30));
@@ -33,8 +34,10 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
 
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(20);
-
+    mainLayout->setSpacing(0);
+    QWidget *topBarPlaceholder = new QWidget();
+    topBarPlaceholder->setFixedHeight(topbar->height());
+    mainLayout->addWidget(topBarPlaceholder, 0, Qt::AlignTop);
     // **Form Fields**
     QFormLayout *formLayout = new QFormLayout;
     formLayout->setSpacing(15);
@@ -96,11 +99,11 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
     QPushButton *registerButton = new QPushButton("Create");
     registerButton->setStyleSheet(R"(
     QPushButton {
-        background-color: #4169E1;
+        background-color: #1E90FF;
         font-size: 16px;
         padding: 12px 24px;
         border-radius: 8px;
-        border:2px solid #4169E1;
+        border:2px solid #1E90FF;
         font-weight: bold;
     }
     QPushButton:hover {
@@ -150,10 +153,6 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
     formContainerLayout->setContentsMargins(20, 0, 20, 0); // Add padding only here
 
     formLayout->setSpacing(10);
-
-
-
-    mainLayout->addWidget(topbar,0, Qt::AlignTop);
     mainLayout->addWidget(backButton, 0, Qt::AlignLeft);
     mainLayout->addWidget(headingLabel, 0, Qt::AlignTop);
     mainLayout->addWidget(formContainer);
@@ -187,55 +186,49 @@ createcourse::createcourse(QWidget *parent) : QWidget(parent) {
         QString courseName = courseNameField->text().trimmed();
         QString courseCode = courseCodeField->text().trimmed();
         QString description = descriptionField->text().trimmed();
-        QString department =  departmentDropdown->currentText();
+        QString department = departmentDropdown->currentText();
         QString teacherId = instructorDropdown->currentData().toString();
-        QMessageBox mesgBox;
-        mesgBox.setStyleSheet(
-            "QMessageBox { background-color: #1b263b; color: white; font-size: 16px; }"
-            "QLabel { color: white; }"
-            "QPushButton { background-color: #778da9; color: white;border:2px solid #778da9; border-radius: 5px; padding: 8px; }"
-            "QPushButton:hover { background-color: transparent; }"
-            );
 
         // Checking Required Fields
-        if (courseName.isEmpty() ||courseCode.isEmpty() || description.isEmpty()) {
-            QMessageBox::warning(this, "Validation Error", "All fields are required!");
+        if (courseName.isEmpty() || courseCode.isEmpty() || description.isEmpty()) {
+            MessageBoxUtil::showCustomMessage(this, "All fields are required!", "Validation Error", "OK");
             return;
         }
         if (instructorDropdown->currentIndex() == 0 || departmentDropdown->currentIndex() == 0) {
-            QMessageBox::warning(this, "Validation Error", "Please select an instructor and department!");
+            MessageBoxUtil::showCustomMessage(this, "Please select an instructor and department!", "Validation Error", "OK");
             return;
         }
+
         QSqlQuery checkQuery;
         checkQuery.prepare("SELECT 1 FROM vls_schema.courses WHERE course_code = :courseCode LIMIT 1");
         checkQuery.addBindValue(courseCode);
 
         if (!checkQuery.exec()) {
-            QMessageBox::critical(this, "Database Error", "Failed to check existing user: " + checkQuery.lastError().text());
+            MessageBoxUtil::showCustomMessage(this, "Failed to check existing course: " + checkQuery.lastError().text(), "Database Error", "OK");
             return;
         }
 
         if (checkQuery.next()) {
-            QMessageBox::warning(this, "Registration Error", "Course code already exists!");
+            MessageBoxUtil::showCustomMessage(this, "Course code already exists!", "Registration Error", "OK");
             return;
         }
+
         QSqlQuery registerQuery;
         registerQuery.prepare("INSERT INTO vls_schema.courses (course_name, course_code, description, department, teacher_id) "
-                      "SELECT :courseName, :courseCode, :description, :department, :teacherId");
+                              "VALUES (:courseName, :courseCode, :description, :department, :teacherId)");
 
-        registerQuery.bindValue(":courseName",courseName);
-        registerQuery.bindValue(":courseCode",courseCode);
-        registerQuery.bindValue(":description",description);
-        registerQuery.bindValue(":department",department);
-        registerQuery.bindValue(":teacherId",teacherId);
+        registerQuery.bindValue(":courseName", courseName);
+        registerQuery.bindValue(":courseCode", courseCode);
+        registerQuery.bindValue(":description", description);
+        registerQuery.bindValue(":department", department);
+        registerQuery.bindValue(":teacherId", teacherId);
+
         if (!registerQuery.exec()) {
-            mesgBox.setWindowTitle("Database Error");
-            mesgBox.setText("Query execution failed: " + registerQuery.lastError().text());
-            mesgBox.setIcon(QMessageBox::Critical);
-            mesgBox.exec();
+            MessageBoxUtil::showCustomMessage(this, "Query execution failed: " + registerQuery.lastError().text(), "Database Error", "OK");
             return;
         }
-        QMessageBox::information(this, "Success", "Course Created Successfully!");
+
+        MessageBoxUtil::showCustomMessage(this, "Course Created Successfully!", "Success", "OK");
         reset();
     });
 

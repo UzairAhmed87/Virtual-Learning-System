@@ -19,11 +19,11 @@
 class createcourse : public QWidget {
 Q_OBJECT
 public:
-    explicit createcourse(QWidget *parent = nullptr);
+    explicit createcourse(QWidget *parent = nullptr,QWidget *topBar=nullptr);
     void reset();
     ~createcourse();
 private:
-    TopBar *topbar;
+    // TopBar *topbar;
     QLineEdit *courseNameField;
     QLineEdit *courseCodeField;
     QLineEdit *descriptionField;

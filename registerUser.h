@@ -23,7 +23,7 @@ class RegisterUserForm : public QWidget {
     Q_OBJECT  // Required if you use signals/slots
 
 public:
-    explicit RegisterUserForm(QWidget *parent = nullptr);
+    explicit RegisterUserForm(QWidget *parent = nullptr,QWidget *topBar = nullptr);
     QString generateUniqueID(QString role,QString department);
     void reset();
     ~RegisterUserForm();
@@ -38,9 +38,11 @@ private:
     QLineEdit *passwordField;
     QPushButton *registerButton;
     QPushButton *resetButton;
-    TopBar *topBar;
+    // TopBar *topBar;
 signals:
     void backButtonClicked();
+// private slots:
+    // void gotoHome();
 };
 
 #endif // REGISTERUSERFORM_H

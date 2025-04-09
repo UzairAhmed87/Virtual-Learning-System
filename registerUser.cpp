@@ -10,11 +10,16 @@
 #include <QCryptographicHash>
 #include "BackButton.h"
 #include <QDebug>
+#include "mesgboxutil.h"
 
-RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
+RegisterUserForm::RegisterUserForm(QWidget *parent,QWidget *topBar) : QWidget(parent) {
     this->setMinimumSize(800, 500); // Forces window to be 800x500
-
-   topBar = new TopBar(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(0);
+    QWidget *topBarPlaceholder = new QWidget();
+    topBarPlaceholder->setFixedHeight(topBar->height());
+    mainLayout->addWidget(topBarPlaceholder, 0, Qt::AlignTop);
+   // topBar = new TopBar(this);
 
     setStyleSheet("background-color: #0D1B2A; color: white; font-size: 16px;");
     QPushButton *backButton = new QPushButton;
@@ -40,8 +45,7 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
 
 
 
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(20);
+
 
     // **Form Fields**
     QFormLayout *formLayout = new QFormLayout();
@@ -173,16 +177,14 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
     buttonLayout->setSpacing(15);
 
     formLayout->addRow(departmentLabel, departmentDropdown);
-    mainLayout->addWidget(topBar,0, Qt::AlignTop);
-    mainLayout->addWidget(backButton, 0, Qt::AlignLeft);
-    mainLayout->addWidget(headingLabel, 0, Qt::AlignTop);
+
+    mainLayout->addWidget(backButton,0, Qt::AlignLeft);
+    mainLayout->addWidget(headingLabel);
     mainLayout->addWidget(formContainer);
     mainLayout->addLayout(buttonLayout);
     mainLayout->addWidget(buttonContainer);
     mainLayout->setContentsMargins(0, 0, 0, 0); // **Added Padding**
     mainLayout->setSpacing(15); // **Balanced Spacing**
-
-
     setLayout(mainLayout);
     connect(resetButton, &QPushButton::clicked, this,&RegisterUserForm::reset);
 
@@ -218,30 +220,48 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         QString gender = genderDropdown->currentText();
         QString role = userTypeDropdown->currentText();
         QString department = departmentDropdown->currentText();
-        QMessageBox mesgBox;
+        /*QMessageBox mesgBox;
         mesgBox.setStyleSheet(
             "QMessageBox { background-color: #1b263b; color: white; font-size: 16px; }"
             "QLabel { color: white; }"
             "QPushButton { background-color: #778da9; color: white;border:2px solid #778da9; border-radius: 5px; padding: 8px; }"
             "QPushButton:hover { background-color: transparent; }"
-            );
+            )*/;
+
+        // **Checking Required Fields**
+        // Set up stylesheet only once if needed in constructor, not here
 
         // **Checking Required Fields**
         if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || password.isEmpty() || phone.isEmpty()) {
-            QMessageBox::warning(this, "Validation Error", "All fields are required!");
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "All fields are required!",
+                "Validation Error",
+                "OK"
+                );
             return;
         }
 
         // **Password Length Check**
         if (password.length() < 6) {
-            QMessageBox::warning(this, "Validation Error", "Password must be at least 6 characters long!");
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "Password must be at least 6 characters long!",
+                "Validation Error",
+                "OK"
+                );
             return;
         }
 
         // **Check if the database is connected**
         QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
         if (!db.isOpen()) {
-            QMessageBox::critical(this, "Database Error", "Database connection is not open!");
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "Database connection is not open!",
+                "Database Error",
+                "OK"
+                );
             return;
         }
 
@@ -251,58 +271,74 @@ RegisterUserForm::RegisterUserForm(QWidget *parent) : QWidget(parent) {
         checkQuery.addBindValue(email);
 
         if (!checkQuery.exec()) {
-            QMessageBox::critical(this, "Database Error", "Failed to check existing user: " + checkQuery.lastError().text());
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "Failed to check existing user: " + checkQuery.lastError().text(),
+                "Database Error",
+                "OK"
+                );
             return;
         }
 
         if (checkQuery.next()) {
-            QMessageBox::warning(this, "Registration Error", "Email is already registered!");
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "Email is already registered!",
+                "Registration Error",
+                "OK"
+                );
             return;
         }
 
-        QString newUniqueID = generateUniqueID(role,department);
+        QString newUniqueID = generateUniqueID(role, department);
+
         // **Insert new user**
         QSqlQuery query;
         if (role == "Student") {
             role = role.toLower();
-            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, department , unique_id,fee_status) "
-                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :department,:unique_id,:fee_status");
-            query.bindValue(":fee_status","Paid");
+            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, department, unique_id, fee_status) "
+                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :department, :unique_id, :fee_status");
+            query.bindValue(":fee_status", "Paid");
             query.bindValue(":department", department);
-        }
-        else {
+        } else {
             role = role.toLower();
-            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role,unique_id) "
-                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role,:unique_id");
-
+            query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, unique_id) "
+                          "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :unique_id");
         }
 
-        // Common fields for all roles
+        // Common fields
         query.bindValue(":first_name", firstName);
         query.bindValue(":last_name", lastName);
         query.bindValue(":email", email);
-        query.bindValue(":password", password);  // Plain password (PostgreSQL will hash it)
+        query.bindValue(":password", password);
         query.bindValue(":phone", phone);
         query.bindValue(":gender", gender);
         query.bindValue(":role", role);
-        query.bindValue(":unique_id",newUniqueID);
-        qDebug()<< "Query: "<<query.executedQuery();
-        qDebug()<<"first_name: " << firstName;
-        qDebug()<< "password: "<<password;
+        query.bindValue(":unique_id", newUniqueID);
+
+        qDebug() << "Query: " << query.executedQuery();
+        qDebug() << "first_name: " << firstName;
+        qDebug() << "password: " << password;
+
         if (!query.exec()) {
-            mesgBox.setWindowTitle("Database Error");
-            mesgBox.setText("Query execution failed: " + query.lastError().text());
-            mesgBox.setIcon(QMessageBox::Critical);
-            mesgBox.exec();
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "Query execution failed: " + query.lastError().text(),
+                "Database Error",
+                "OK"
+                );
             return;
         }
 
-        // Success Message
-        mesgBox.setWindowTitle("Success");
-        mesgBox.setText("User registered successfully!");
-        mesgBox.setIcon(QMessageBox::Information);
-        mesgBox.exec();
+        // ✅ Success Message
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "User registered successfully!",
+            "Success",
+            "OK"
+            );
         reset();
+
 
     });
 }

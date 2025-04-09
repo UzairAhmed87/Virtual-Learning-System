@@ -10,79 +10,41 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-# Find Qt6 or Qt5
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
+# Find Qt6 components (Added MultimediaWidgets for QVideoWidget)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Multimedia MultimediaWidgets)
+
+# Copy images directory to build directory
 file(COPY ${CMAKE_SOURCE_DIR}/images DESTINATION ${CMAKE_BINARY_DIR})
+
 # Define project sources
 set(PROJECT_SOURCES
     main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    LoginPage.ui
-    AdminPage.cpp
-    AdminHomePage.h
-    DatabaseManager.cpp
-    DatabaseManager.h
-    StudentHomePage.cpp
-    StudentHomePage.h
-    TeacherHomePage.cpp
-    TeacherHomePage.h
-    registerUser.h
-    registerUser.cpp
-    LoginPage.cpp
-    LoginPage.h
+    mainwindow.cpp mainwindow.h
+    LoginPage.cpp LoginPage.h LoginPage.ui
+    AdminPage.cpp AdminHomePage.h
+    DatabaseManager.cpp DatabaseManager.h
+    StudentHomePage.cpp StudentHomePage.h
+    TeacherHomePage.cpp TeacherHomePage.h
+    registerUser.cpp registerUser.h
     resources.qrc
-    BackButton.cpp
-    BackButton.h
-    createcourse.cpp
-    createcourse.h
+    BackButton.cpp BackButton.h
+    createcourse.cpp createcourse.h
+    allusers.cpp allusers.h
+    ProfilePage.cpp ProfilePage.h
+    allCourses.cpp allCourses.h
+    enrollStudent.cpp enrollStudent.h
+    uploadpdf.cpp uploadpdf.h
+    uploadlecture.cpp uploadlecture.h  # Ensure both .cpp and .h are included
+    TopBar.cpp TopBar.h
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(login
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-        AdminHomePage.h
-        .gitignore
-        TopBar.h
-        TopBar.cpp
-        registerUser.h
-        registerUser.cpp
-        LoginPage.h
-        LoginPage.cpp
-        BackButton.h
-        BackButton.cpp
-        createcourse.h
-        createcourse.cpp
-        allusers.h
-        allusers.cpp
-        ProfilePage.h
-        ProfilePage.cpp
-    )
-else()
-    if(ANDROID)
-        add_library(login SHARED ${PROJECT_SOURCES})
-    else()
-        add_executable(login ${PROJECT_SOURCES})
-    endif()
-endif()
+# Create executable
+qt_add_executable(login MANUAL_FINALIZATION ${PROJECT_SOURCES}
+    mesgboxutil.h
+    mesgboxutil.cpp)
 
-# Link required Qt components
-target_link_libraries(login PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Sql)
-
-# macOS/iOS specific settings
-if(${QT_VERSION} VERSION_LESS 6.1.0)
-    set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.login)
-endif()
-
-set_target_properties(login PROPERTIES
-    ${BUNDLE_ID_OPTION}
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    MACOSX_BUNDLE TRUE
-    WIN32_EXECUTABLE TRUE
-)
+# Link Qt components (Added MultimediaWidgets)
+target_link_libraries(login PRIVATE Qt6::Widgets Qt6::Sql Qt6::Multimedia Qt6::MultimediaWidgets)
 
 # Install instructions
 include(GNUInstallDirs)
@@ -92,8 +54,8 @@ install(TARGETS login
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-# Finalize Qt executable if using Qt 6
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(login)
-endif()
+# Finalize Qt executable
+qt_finalize_executable(login)
+
+# Include directory
 include_directories(${CMAKE_SOURCE_DIR}/include)

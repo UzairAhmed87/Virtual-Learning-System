@@ -6,6 +6,7 @@
 #include <QtSql/QSqlError>
 #include "DatabaseManager.h"
 #include "QCryptographicHash"
+#include "mesgboxutil.h"
 
 LoginPage::LoginPage(QWidget *parent)
     : QWidget(parent)
@@ -27,28 +28,25 @@ void LoginPage::handleLogin() {
     QString password = ui->passField->text();
     QString role = ui->roleField->currentText();
 
-    QMessageBox mesgBox;
-    mesgBox.setStyleSheet(
-        "QMessageBox { background-color: #1b263b; color: white; font-size: 16px; }"
-        "QLabel { color: white; }"
-        "QPushButton { background-color: #778da9; color: white;border:2px solid #778da9; border-radius: 5px; padding: 8px; }"
-        "QPushButton:hover { background-color: transparent; }"
-        );
-
     if (email.isEmpty() || password.isEmpty()) {
-        mesgBox.setWindowTitle("Login Error");
-        mesgBox.setText("Please enter both email and password.⚠️ ");
-        mesgBox.setIcon(QMessageBox::Warning);
-        mesgBox.exec();
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Please enter both email and password.⚠️ ",
+            "Login Error", // You can set any title you want
+            "OK"           // Customize the button text
+            );
         return;
     }
 
     QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
     if (!db.isOpen()) {
-        mesgBox.setWindowTitle("Database Error");
-        mesgBox.setText("Database connection is not open!");
-        mesgBox.setIcon(QMessageBox::Critical);
-        mesgBox.exec();
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Database connection is not open! ",
+            "Database Error", // You can set any title you want
+            "OK"           // Customize the button text
+            );
+
         return;
     }
 
@@ -63,24 +61,30 @@ void LoginPage::handleLogin() {
     query.bindValue(":password", password);
     query.bindValue(":role", role);
     if (!query.exec()) {
-        mesgBox.setWindowTitle("Database Error");
-        mesgBox.setText("Query execution failed: " + query.lastError().text());
-        mesgBox.setIcon(QMessageBox::Critical);
-        mesgBox.exec();
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Query execution failed: "+ query.lastError().text(),
+            "Database Error", // You can set any title you want
+            "OK"           // Customize the button text
+            );
         return;
     }
 
     if (query.next()) {
         QString firstName = query.value(1).toString();
-        mesgBox.setWindowTitle("Login Success");
-        mesgBox.setText("✅ Welcome " + firstName + "!");
-        mesgBox.setIcon(QMessageBox::Information);
-        mesgBox.exec();
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "✅ Welcome " + firstName + "!",
+            "Login Successfull", // You can set any title you want
+            "OK"           // Customize the button text
+            );
         emit loginSuccessful(role,email);
     } else {
-        mesgBox.setWindowTitle("Login Failed");
-        mesgBox.setText("Invalid email, password, or role.");
-        mesgBox.setIcon(QMessageBox::Warning);
-        mesgBox.exec();
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Invalid email, password, or role.",
+            "Login Failed", // You can set any title you want
+            "OK"           // Customize the button text
+            );
     }
 }

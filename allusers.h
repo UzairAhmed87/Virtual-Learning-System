@@ -20,7 +20,7 @@
 class AllUsers : public QWidget {
     Q_OBJECT
 public:
-    AllUsers(QWidget *parent = nullptr);
+    AllUsers(QWidget *parent = nullptr,QWidget *topBar=nullptr);
     void applyHoverEffect(QPushButton *button);
     void populateTable(const QStringList &data);
 
@@ -37,15 +37,16 @@ private:
 
     QStringList students, teachers;
     QString currentCategory = "Students";
-    TopBar *topBar;
+    QWidget *topBarWidget;
     QTableWidget *tableWidget;
+    QVBoxLayout *mainLayout;
     QLabel *totalUsersLabel; // Label to display count
     QPushButton *backButton;
 
     void setupUI();
     void setupHoverEffect();
     void setupConnections();
-
+    void getAllUsers();
     void switchCategory(const QString &category);
     void searchUser();
     void refreshTable();

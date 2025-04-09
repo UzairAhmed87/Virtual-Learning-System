@@ -8,67 +8,27 @@
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
+#include "mesgboxutil.h"
 
+AllUsers::AllUsers(QWidget *parent,QWidget *topBar) : QWidget(parent) {
+    mainLayout = new QVBoxLayout(this);
 
-AllUsers::AllUsers(QWidget *parent) : QWidget(parent) {
+    QWidget *topBarPlaceholder = new QWidget();
+    topBarPlaceholder->setFixedHeight(topBar->height());
+    mainLayout->addWidget(topBarPlaceholder, 0, Qt::AlignTop);
     setupUI();
     setupHoverEffect();
     setupConnections();
+
+
 }
 
+
 void AllUsers::setupUI() {
+    this->setMinimumSize(800,500);
     this->setStyleSheet("background-color: #0D1B2A;");  // Dark blue background
-    topBar = new TopBar(this);
-    QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
-    if (!db.isOpen()) {
-        QMessageBox::critical(this, "Database Error", "Database connection is not open!");
-        return;
-    }
-    QSqlQuery teacherQuery;
-    teacherQuery.prepare("SELECT unique_id, first_name, last_name,email,gender,department,fee_status,phone FROM vls_schema.users WHERE role = 'teacher'");
-    if (!teacherQuery.exec()) {
-        QMessageBox::critical(this, "Database Error", "Failed to retrieve users: " + teacherQuery.lastError().text());
-        return;
-    }
-    while (teacherQuery.next()) {
-        QString uniqueId = teacherQuery.value("unique_id").toString();
-        QString firstName = teacherQuery.value("first_name").toString();
-        QString lastName = teacherQuery.value("last_name").toString();
-        QString fullName = firstName + " " + lastName;
-        QString email = teacherQuery.value("email").toString();
-        QString gender = teacherQuery.value("gender").toString();
-        // QString department = "N/A";
-        // QString feeStatus = teacherQuery.value("fee_status").toString();
-        QString phone = teacherQuery.value("phone").toString();
-        qDebug() << "Gender fetched:" << gender;
-        // Format and store the data
-        teachers << QString("%1, %2 , %3, %4, %5")
-                        .arg(uniqueId, fullName, gender, email,phone);
-    }
-
-    totalUsersLabel = new QLabel("Total Users: 0", this);
-    QSqlQuery studentQuery;
-    studentQuery.prepare("SELECT unique_id, first_name, last_name,email,gender,department,fee_status,phone FROM vls_schema.users WHERE role = 'student'");
-    if (!studentQuery.exec()) {
-        QMessageBox::critical(this, "Database Error", "Failed to retrieve users: " + studentQuery.lastError().text());
-        return;
-    }
-    while (studentQuery.next()) {
-        QString uniqueId = studentQuery.value("unique_id").toString();
-        QString firstName = studentQuery.value("first_name").toString();
-        QString lastName = studentQuery.value("last_name").toString();
-        QString fullName = firstName + " " + lastName;
-        QString email = studentQuery.value("email").toString();
-        QString gender = studentQuery.value("gender").toString();
-        QString department = studentQuery.value("department").toString();
-        QString feeStatus = studentQuery.value("fee_status").toString();
-        QString phone = studentQuery.value("phone").toString();
-
-        // Format and store the data
-        students << QString("%1, %2, %3, %4, %5,%6,%7")
-                        .arg(uniqueId, fullName, gender, department, email,phone,feeStatus);
-    }
-
+    // topBar = new TopBar(this);
+    getAllUsers();
     QPushButton *backButton = new QPushButton;
     backButton->setIcon(QIcon("images/back_arrow.png")); // Use an appropriate left arrow icon
     backButton->setIconSize(QSize(30, 30));
@@ -174,9 +134,9 @@ void AllUsers::setupUI() {
     searchLayout->addWidget(refreshBtn);
     searchLayout->addWidget(filterBtn);
 
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
-    mainLayout->addWidget(topBar,0, Qt::AlignTop);
+
+
     mainLayout->addWidget(backButton, 0, Qt::AlignLeft);
     mainLayout->addWidget(heading);
     mainLayout->addLayout(categoryLayout);
@@ -184,10 +144,80 @@ void AllUsers::setupUI() {
     mainLayout->addLayout(searchLayout);
     mainLayout->addWidget(table);
     mainLayout->addWidget(totalUsersLabel, 0, Qt::AlignLeft);
-
+    mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
     setLayout(mainLayout);
+}
+void AllUsers::getAllUsers() {
+    QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
+    if (!db.isOpen()) {
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Database connection is not open!",
+            "Database Error",
+            "OK"
+            );
+        return;
+    }
+
+    QSqlQuery teacherQuery;
+    teacherQuery.prepare("SELECT unique_id, first_name, last_name,email,gender,department,fee_status,phone FROM vls_schema.users WHERE role = 'teacher'");
+    if (!teacherQuery.exec()) {
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Failed to retrieve users: " + teacherQuery.lastError().text(),
+            "Database Error",
+            "OK"
+            );
+        return;
+    }
+
+    while (teacherQuery.next()) {
+        QString uniqueId = teacherQuery.value("unique_id").toString();
+        QString firstName = teacherQuery.value("first_name").toString();
+        QString lastName = teacherQuery.value("last_name").toString();
+        QString fullName = firstName + " " + lastName;
+        QString email = teacherQuery.value("email").toString();
+        QString gender = teacherQuery.value("gender").toString();
+        QString phone = teacherQuery.value("phone").toString();
+
+        qDebug() << "Gender fetched:" << gender;
+
+        // Format and store the data
+        teachers << QString("%1, %2 , %3, %4, %5")
+                        .arg(uniqueId, fullName, gender, email, phone);
+    }
+
+    totalUsersLabel = new QLabel("Total Users: 0", this);
+
+    QSqlQuery studentQuery;
+    studentQuery.prepare("SELECT unique_id, first_name, last_name,email,gender,department,fee_status,phone FROM vls_schema.users WHERE role = 'student'");
+    if (!studentQuery.exec()) {
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Failed to retrieve users: " + studentQuery.lastError().text(),
+            "Database Error",
+            "OK"
+            );
+        return;
+    }
+
+    while (studentQuery.next()) {
+        QString uniqueId = studentQuery.value("unique_id").toString();
+        QString firstName = studentQuery.value("first_name").toString();
+        QString lastName = studentQuery.value("last_name").toString();
+        QString fullName = firstName + " " + lastName;
+        QString email = studentQuery.value("email").toString();
+        QString gender = studentQuery.value("gender").toString();
+        QString department = studentQuery.value("department").toString();
+        QString feeStatus = studentQuery.value("fee_status").toString();
+        QString phone = studentQuery.value("phone").toString();
+
+        // Format and store the data
+        students << QString("%1, %2, %3, %4, %5,%6,%7")
+                        .arg(uniqueId, fullName, gender, department, email, phone, feeStatus);
+    }
 }
 
 void AllUsers::setupHoverEffect() {
@@ -213,7 +243,12 @@ void AllUsers::setupConnections() {
     connect(searchBar, &QLineEdit::textChanged, this, &AllUsers::searchUser);
     connect(refreshBtn, &QPushButton::clicked, this, &AllUsers::refreshTable);
     connect(filterBtn, &QPushButton::clicked, [=]() {
-        QMessageBox::information(this, "Filter", "Filtering functionality will be added soon!");
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Filtering functionality will be added soon!",
+            "Filter",
+            "OK"
+            );
     });
 }
 
@@ -281,13 +316,42 @@ void AllUsers::populateTable(const QStringList &data) {
 void AllUsers::deleteUser(int row) {
     if (row < 0 || row >= table->rowCount()) return;
 
-    int confirm = QMessageBox::question(this, "Delete User", "Are you sure you want to delete this user?");
-    if (confirm == QMessageBox::Yes) {
-        table->removeRow(row);
-        updateUserCount(); // Update count after deleting
-        QMessageBox::information(this, "Success", "User deleted successfully!");
+    QString userID = table->item(row, 0)->text();
+    qDebug() << "row ID: " << userID;
+
+    bool confirm = MessageBoxUtil::showCustomQuestion(
+        this,
+        "Are you sure you want to delete this user?",
+        "Confirm Deletion",
+        "Yes, Delete",
+        "Nope"
+        );
+
+    if (confirm) {
+        QSqlQuery query;
+        query.prepare("DELETE FROM vls_schema.users WHERE unique_id = :id");
+        query.bindValue(":id", userID);
+
+        if (query.exec()) {
+            table->removeRow(row);
+            updateUserCount();
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "✅ User Deleted Successfully!",
+                "Success",
+                "OK"
+                );
+        } else {
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "Failed to delete user from the database.",
+                "Error",
+                "OK"
+                );
+        }
     }
 }
+
 
 
 
@@ -298,7 +362,12 @@ void AllUsers::updateUser(int row) {
     QString newName = QInputDialog::getText(this, "Update User", "Enter new name:");
     if (!newName.isEmpty()) {
         table->item(row, 1)->setText(newName);
-        QMessageBox::information(this, "Success", "User updated successfully!");
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "User updated successfully!",
+            "Success",
+            "OK"
+            );
     }
 }
 
@@ -339,6 +408,11 @@ void AllUsers::searchUser() {
 
 void AllUsers::refreshTable() {
     searchBar->clear();
+    table->clear();
+    students.clear();
+    teachers.clear();
+    table->setRowCount(0);
+    getAllUsers();
     switchCategory(currentCategory);
 }
 bool AllUsers::eventFilter(QObject *obj, QEvent *event) {
