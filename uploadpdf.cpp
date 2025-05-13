@@ -1,158 +1,256 @@
 #include "uploadpdf.h"
-#include <QFile>
-#include <QFileDialog>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QHttpPart>
-#include <QJsonObject>
-#include <QJsonDocument>
-#include <QMessageBox>
-#include <QDesktopServices>
-#include <QUrl>
-#include <QDebug>
-#include "DatabaseManager.h"
+#include "supabaseconfig.h"
+#include <QDateTimeEdit>
+#include <QTextEdit>
 
-UploadPdf::UploadPdf(const QString &ID,QWidget *parent, QWidget *topBar) : QWidget(parent) {
-    // Set Window Properties
-    setStyleSheet("background-color: #0D1B2A;");
+UploadPdf::UploadPdf(const QString &ID, QWidget *parent, QWidget *topBar) : QWidget(parent) {
+    uniqueId = ID;
     setWindowState(Qt::WindowMaximized);
-    uniqueId=ID;
-    // Main Layout
+
+    // Main background with gradient
+    setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #0F172A, stop:1 #1E293B);");
+
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
 
     // Top Bar
-    mainLayout->addWidget(topBar);
-
-    // Back Button
-    QPushButton *backButton = new QPushButton(this);
-    backButton->setIcon(QIcon("images/back_arrow.png"));
-    backButton->setIconSize(QSize(30, 30));
-    backButton->setCursor(Qt::PointingHandCursor);
-    backButton->setStyleSheet(R"(
-        QPushButton { background: none; border: none; padding: 5px; }
-        QPushButton:hover { background-color: rgba(255, 255, 255, 0.2); border-radius: 5px; }
-        QPushButton:pressed { background-color: rgba(255, 255, 255, 0.3); border-radius: 5px; }
-    )");
-    connect(backButton, &QPushButton::clicked, this, [=]() {
-        emit backButtonClicked();
-    });
-    backButton->setGeometry(10, 70, 40, 40);
+    QWidget *topBarPlaceholder = new QWidget();
+    topBarPlaceholder->setFixedHeight(topBar->height());
+    mainLayout->addWidget(topBarPlaceholder, 0, Qt::AlignTop);
 
     // Functional Window
-    QWidget *functionalWindow = new QWidget(this);
-    functionalWindow->setStyleSheet("background-color: #283044; border-radius: 20px;");
-    functionalWindow->setFixedSize(800, 550);
+   QWidget *functionalWindow = new QWidget(this);
+    functionalWindow->setMinimumSize(800, 600);
+    functionalWindow->setMaximumWidth(1000);
+    functionalWindow->setObjectName("functionalWindow");
+    functionalWindow->setStyleSheet(
+        "QWidget#functionalWindow {"
+        "   background-color: rgba(30, 41, 59, 0.8);"
+        "   border: 1px solid rgba(255, 255, 255, 0.1);"
+        "   border-radius: 24px;"
+        "   padding: 20px;"
+        "}"
+        );
 
     QVBoxLayout *functionalLayout = new QVBoxLayout(functionalWindow);
-    functionalLayout->setAlignment(Qt::AlignCenter);
+    functionalLayout->setContentsMargins(30, 20, 30, 20);
+    functionalLayout->setSpacing(25);
 
-    // PDF File Label
+    // Title Label
+    QLabel *titleLabel = new QLabel("Upload Assignment", functionalWindow);
+    titleLabel->setStyleSheet(
+        "font-size: 28px; font-weight: bold; color: white; background:transparent;"
+        "margin-bottom: 10px;"
+        );
+    titleLabel->setAlignment(Qt::AlignCenter);
+    functionalLayout->addWidget(titleLabel, 0, Qt::AlignHCenter);
+
+    // PDF Preview Section
+    QWidget *pdfContainer = new QWidget(this);
+    pdfContainer->setObjectName("pdfContainer");
+    pdfContainer->setStyleSheet(
+        "QWidget#pdfContainer {"
+        "   background-color: rgba(15, 23, 42, 0.5);"
+        "   border-radius: 20px;"
+        "   border: 1px solid rgba(255, 255, 255, 0.1);"
+        "}"
+        );
+
+    QVBoxLayout *pdfContainerLayout = new QVBoxLayout(pdfContainer);
+    pdfContainerLayout->setContentsMargins(20, 20, 20, 20);
+
+    // PDF File Label (reduced size)
     pdfFileLabel = new QLabel("No PDF selected", this);
     pdfFileLabel->setAlignment(Qt::AlignCenter);
-    pdfFileLabel->setStyleSheet("color: white; font-size: 14px;");
-    pdfFileLabel->setFixedSize(750, 50);
-    functionalLayout->addWidget(pdfFileLabel, 0, Qt::AlignCenter);
+    pdfFileLabel->setStyleSheet(
+        "QLabel {"
+        "   color: rgba(255, 255, 255, 0.7);"
+        "   font-size: 16px;"
+        "   padding: 15px;"
+        "   background-color: rgba(15, 23, 42, 0.5);"
+        "   border-radius: 16px;"
+        "   border: 2px dashed rgba(255, 255, 255, 0.2);"
+        "}"
+        );
+    pdfFileLabel->setFixedSize(300, 150); // Reduced size
+    pdfContainerLayout->addWidget(pdfFileLabel, 0, Qt::AlignCenter);
 
-    // File Selection / Open Button
+    functionalLayout->addWidget(pdfContainer);
+
+    // File Selection Button
     fileButton = new QPushButton("Select PDF File", this);
     fileButton->setCursor(Qt::PointingHandCursor);
-    fileButton->setStyleSheet(R"(
-        QPushButton { padding: 12px; font-size: 16px; background-color: #212735; color: white; border-radius: 20px; }
-        QPushButton:hover { background-color: #2E3542; }
-        QPushButton:pressed { background-color: #3A4252; }
-    )");
-    connect(fileButton, &QPushButton::clicked, this, &UploadPdf::selectFile);
-    functionalLayout->addWidget(fileButton, 0, Qt::AlignCenter);
+    fileButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #3B82F6;"
+        "   color: white;"
+        "   font-size: 15px;"
+        "   font-weight: bold;"
+        "   padding: 12px 20px;"
+        "   border-radius: 10px;"
+        "   border: none;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: #60A5FA;"
+        "}"
+        "QPushButton:pressed {"
+        "   background-color: #2563EB;"
+        "}"
+        );
+    fileButton->setFixedWidth(200);
+    QHBoxLayout *selectButtonLayout = new QHBoxLayout();
+    selectButtonLayout->setAlignment(Qt::AlignCenter);
+    selectButtonLayout->addWidget(fileButton);
+    functionalLayout->addLayout(selectButtonLayout);
 
-    // Add Vertical Space
-    functionalLayout->addSpacing(20);
-    // Course Code Label
-    QLabel *courseLabel = new QLabel("Select Course:", this);
-    courseLabel->setStyleSheet("font-weight: bold;color:white; font-size: 20px;");
-    courseLabel->setAlignment(Qt::AlignLeft);
-    functionalLayout->addWidget(courseLabel, 0, Qt::AlignLeft);
+    // Input Fields
+    QVBoxLayout *formLayout = new QVBoxLayout();
+    formLayout->setContentsMargins(40, 0, 40, 0);
+    formLayout->setSpacing(15);
 
-    // Course Code Dropdown
+    // Description Input
+    QLabel *descriptionLabel = new QLabel("Description", this);
+    descriptionLabel->setStyleSheet("font-weight: bold; color: white; font-size: 16px;background:transparent;");
+    formLayout->addWidget(descriptionLabel);
+
+    descriptionInput = new QTextEdit(this);
+    descriptionInput->setPlaceholderText("Enter description");
+    descriptionInput->setFixedHeight(50);
+    descriptionInput->setStyleSheet(
+        "QTextEdit {"
+        "   background-color: rgba(15, 23, 42, 0.5);"
+        "   color: white;"
+        "   padding: 12px 16px;"
+        "   font-size: 15px;"
+        "   border-radius: 10px;"
+        "   border: 1px solid rgba(255, 255, 255, 0.1);"
+        "}"
+        "QTextEdit:focus {"
+        "   border: 1px solid #3B82F6;"
+        "}"
+        );
+    formLayout->addWidget(descriptionInput);
+
+    // Deadline Input
+    QLabel *deadlineLabel = new QLabel("Deadline", this);
+    deadlineLabel->setStyleSheet("font-weight: bold; color: white; font-size: 16px;background:transparent");
+    formLayout->addWidget(deadlineLabel);
+
+    QHBoxLayout *deadlineLayout = new QHBoxLayout();
+    deadlineLayout->setSpacing(10);
+
+    deadlineInput = new QDateTimeEdit(this);
+    deadlineInput->setCalendarPopup(true); // Enable calendar popup
+    deadlineInput->setDisplayFormat("yyyy-MM-dd hh:mm AP"); // Format with AM/PM
+    deadlineInput->setDateTime(QDateTime::currentDateTime()); // Default to current date/time
+    deadlineInput->setFixedHeight(45);
+    deadlineInput->setStyleSheet(
+        "QDateTimeEdit {"
+        "   background-color: rgba(15, 23, 42, 0.5);"
+        "   color: white;"
+        "   padding: 12px 16px;"
+        "   font-size: 15px;"
+        "   border-radius: 10px;"
+        "   border: 1px solid rgba(255, 255, 255, 0.1);"
+        "}"
+        "QDateTimeEdit:focus {"
+        "   border: 1px solid #3B82F6;"
+        "}"
+        "QDateTimeEdit::drop-down {"
+        "   subcontrol-origin: padding;"
+        "   subcontrol-position: center right;"
+        "color:white;"
+        "   width: 30px;"
+        "   border-left: none;"
+        "}"
+        );
+    deadlineLayout->addWidget(deadlineInput);
+
+    formLayout->addLayout(deadlineLayout);
+
+    // Course Selection
+    QLabel *courseLabel = new QLabel("Select Course", this);
+    courseLabel->setStyleSheet("font-weight: bold; color: white; font-size: 16px;background:transparent;");
+    formLayout->addWidget(courseLabel);
+
     courseDropdown = new QComboBox(this);
-    courseDropdown->setStyleSheet(R"(
-    QComboBox { background-color: #212735; color: white; padding: 8px; font-size: 14px; border-radius: 10px; }
-    QComboBox QAbstractItemView { background-color: #212735; color: white; selection-background-color: #0078D4; }
-)");
-    courseDropdown->setFixedSize(750, 40);
-    functionalLayout->addWidget(courseDropdown, 0, Qt::AlignCenter);
+    courseDropdown->setFixedHeight(45);
+    courseDropdown->setStyleSheet(
+        "QComboBox {"
+        "   background-color: rgba(15, 23, 42, 0.5);"
+        "   color: white;"
+        "   padding: 12px 16px;"
+        "   font-size: 15px;"
+        "   border-radius: 10px;"
+        "   border: 1px solid rgba(255, 255, 255, 0.1);"
+        "}"
+        "QComboBox:focus, QComboBox:on {"
+        "   border: 1px solid #3B82F6;"
+        "}"
+        "QComboBox::drop-down {"
+        "   subcontrol-origin: padding;"
+        "   subcontrol-position: center right;"
+        "   width: 30px;"
+        "   border-left: none;"
+        "}"
+        "QComboBox QAbstractItemView {"
+        "   background-color: #1E293B;"
+        "   color: white;"
+        "   border: 1px solid rgba(255, 255, 255, 0.1);"
+        "   border-radius: 8px;"
+        "   selection-background-color: #3B82F6;"
+        "}"
+        );
+    formLayout->addWidget(courseDropdown);
 
+    functionalLayout->addLayout(formLayout);
 
-
-    // Description Label
-    QLabel *descLabel = new QLabel("Enter Description:", this);
-    descLabel->setStyleSheet("font-weight: bold;color:white; font-size: 20px;");
-    descLabel->setAlignment(Qt::AlignLeft);
-    functionalLayout->addWidget(descLabel, 0, Qt::AlignLeft);
-
-    // Description Input Field
-    descInput = new QTextEdit(this);
-    descInput->setPlaceholderText("Enter description (optional)");
-    descInput->setStyleSheet(R"(
-        QTextEdit { background-color: #212735; color: white; border-radius: 10px; padding: 8px; font-size: 14px; }
-    )");
-    descInput->setFixedSize(750, 100);
-    functionalLayout->addWidget(descInput, 0, Qt::AlignCenter);
-
-    // Add Vertical Space before Buttons
-    functionalLayout->addSpacing(20);
-
-    // Upload & Reset Buttons Layout
+    // Upload & Reset Buttons
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->setAlignment(Qt::AlignCenter);
+    buttonLayout->setSpacing(20);
 
     uploadButton = new QPushButton("Upload PDF", this);
+    uploadButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #3B82F6;"
+        "   color: white;"
+        "   font-size: 15px;"
+        "   font-weight: bold;"
+        "   padding: 12px 20px;"
+        "   border-radius: 10px;"
+        "   border: none;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: #60A5FA;"
+        "}"
+        "QPushButton:pressed {"
+        "   background-color: #2563EB;"
+        "}"
+        );
+    uploadButton->setFixedSize(180, 45);
+    uploadButton->setVisible(false);
+
     resetButton = new QPushButton("Reset", this);
-
-    // const QString buttonStyle = R"(
-    //     QPushButton { color: white; padding: 15px; border-radius: 20px; }
-    //     QPushButton:hover { filter: brightness(1.2); }
-    //     QPushButton:pressed { filter: brightness(0.8); }
-    // )";
-
-    // uploadButton->setFixedSize(150, 50);
-    uploadButton->setStyleSheet(R"(
-    QPushButton {
-        background-color: #1E90FF;
-        color: white;
-        font-size: 16px;
-        padding: 12px 24px;
-        border-radius: 8px;
-        border:2px solid #1E90FF;
-        font-weight: bold;
-    }
-    QPushButton:hover {
-
-        background: transparent;
-
-    }
-    QPushButton:pressed { background-color: #1B263B; }
-)");
-    uploadButton->setVisible(false);  // Initially hidden
-
-    resetButton->setFixedSize(150, 50);
-    resetButton->setStyleSheet(R"(
-    QPushButton {
-        background-color: #FF5C5C;
-        color: white;
-        font-size: 16px;
-        padding: 12px 24px;
-        border-radius: 8px;
-        border: 2px solid #FF5C5C;
-        font-weight: bold;
-    }
-    QPushButton:hover {
-        background-color: transparent;
-    }
-    QPushButton:pressed { background-color: #1B263B; }
-)");
-
+    resetButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: #EF4444;"
+        "   color: white;"
+        "   font-size: 15px;"
+        "   font-weight: bold;"
+        "   padding: 12px 20px;"
+        "   border-radius: 10px;"
+        "   border: none;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: #F87171;"
+        "}"
+        "QPushButton:pressed {"
+        "   background-color: #DC2626;"
+        "}"
+        );
+    resetButton->setFixedSize(180, 45);
 
     buttonLayout->addWidget(uploadButton);
     buttonLayout->addWidget(resetButton);
@@ -160,31 +258,67 @@ UploadPdf::UploadPdf(const QString &ID,QWidget *parent, QWidget *topBar) : QWidg
 
     mainLayout->addWidget(functionalWindow, 0, Qt::AlignCenter);
 
-    // Signal Connections
+    // Back Button
+    QPushButton *backButton = new QPushButton(this);
+    backButton->setIcon(QIcon("images/back_arrow.png"));
+    backButton->setIconSize(QSize(32, 32));
+    backButton->setCursor(Qt::PointingHandCursor);
+    backButton->setStyleSheet(
+        "QPushButton {"
+        "   background-color: rgba(30, 41, 59, 0.7);"
+        "   border: none;"
+        "   border-radius: 20px;"
+        "   padding: 10px;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: rgba(59, 130, 246, 0.7);"
+        "}"
+        "QPushButton:pressed {"
+        "   background-color: rgba(37, 99, 235, 0.7);"
+        "}"
+        );
+    backButton->setFixedSize(40, 40);
+    backButton->setGeometry(20, 80, 40, 40);
+    connect(backButton, &QPushButton::clicked, this, [=]() {
+        emit backButtonClicked();
+    });
+
+    // Connect signals
+    connect(fileButton, &QPushButton::clicked, this, &UploadPdf::selectFile);
     connect(uploadButton, &QPushButton::clicked, this, &UploadPdf::uploadFile);
     connect(resetButton, &QPushButton::clicked, this, &UploadPdf::resetScreen);
+
     loadCourses();
 }
-void UploadPdf::loadCourses(){
+
+void UploadPdf::loadCourses() {
     QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
     if (!db.isOpen()) {
-        QMessageBox::critical(this, "Database Error", "Database connection is not open!");
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Database connection is not open!",
+            "Database Error",
+            "OK"
+            );
         return;
     }
     QSqlQuery query;
     query.prepare("SELECT course_code FROM vls_schema.courses WHERE teacher_id = :uniqueId");
-    query.bindValue(":uniqueId",uniqueId);
-    qDebug()<<"unique Id:" << uniqueId;
-    if(!query.exec())
-    {
-        QMessageBox::critical(this, "Database Error", "Failed to retrieve courses: " + query.lastError().text());
+    query.bindValue(":uniqueId", uniqueId);
+    qDebug() << "unique Id:" << uniqueId;
+    if (!query.exec()) {
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Failed to retrieve courses: " + query.lastError().text(),
+            "Database Error",
+            "OK"
+            );
         return;
-    };
+    }
     while (query.next()) {
         QString courseCode = query.value(0).toString();
         courseDropdown->addItem(courseCode);
     }
-
 }
 
 void UploadPdf::selectFile() {
@@ -194,88 +328,112 @@ void UploadPdf::selectFile() {
         pdfFileLabel->setText("Selected: " + filePath);
         qDebug() << "Selected PDF:" << filePath;
 
-        // Change "Select PDF File" to "Open PDF"
         fileButton->setText("Open PDF");
         disconnect(fileButton, &QPushButton::clicked, this, &UploadPdf::selectFile);
         connect(fileButton, &QPushButton::clicked, this, &UploadPdf::openPDF);
 
-        uploadButton->setVisible(true);  // Show Upload button
+        uploadButton->setVisible(true);
     }
 }
 
 void UploadPdf::resetScreen() {
     filePath.clear();
     pdfFileLabel->setText("No PDF selected");
-    descInput->clear();
+    descriptionInput->clear();
+    deadlineInput->setDateTime(QDateTime::currentDateTime());
 
     fileButton->setText("Select PDF File");
     disconnect(fileButton, &QPushButton::clicked, this, &UploadPdf::openPDF);
     connect(fileButton, &QPushButton::clicked, this, &UploadPdf::selectFile);
 
-    uploadButton->setVisible(false);  // Hide Upload button again
+    uploadButton->setVisible(false);
 }
 
 void UploadPdf::uploadFile() {
     if (filePath.isEmpty()) {
-        qDebug() << "No file selected for upload!";
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "No file selected!",
+            "Error",
+            "OK"
+            );
         return;
     }
 
-    qDebug() << "Uploading file: " << filePath;
-    qDebug() << "Description: " << descInput->toPlainText();
-
-    // Prepare the file for upload
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Error opening file!";
+        MessageBoxUtil::showCustomMessage(
+            this,
+            "Failed to open the file.",
+            "Error",
+            "OK"
+            );
         return;
     }
 
-    // Prepare the network request for file upload
-    QNetworkRequest uploadRequest(QUrl("https://xubfmxtcefkzpfjytavd.supabase.co/storage/v1/object/assignments/" + QFileInfo(filePath).fileName()));
-    uploadRequest.setRawHeader("Authorization", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1YmZteHRjZWZrenBmanl0YXZkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY3NjI0NSwiZXhwIjoyMDU5MjUyMjQ1fQ.ujizd3now55PzNIbkEeH9xR3LOoz1JxWaJlUrrAnOTs");
+    QByteArray fileData = file.readAll();
+    file.close();
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QNetworkReply *reply = manager->put(uploadRequest, file.readAll());
+    QString fileName = QFileInfo(filePath).fileName();
+    QString uploadUrl = SupabaseConfig::getAssignmentStorageUrl() + fileName;
 
-    connect(reply, &QNetworkReply::finished, this, [=]() {
-        if (reply->error() != QNetworkReply::NoError) {
-            qDebug() << "File upload failed:" << reply->errorString();
-            QMessageBox::warning(this, "Upload Failed", "File upload failed!");
+    QNetworkRequest uploadRequest{QUrl(uploadUrl)};
+    uploadRequest.setRawHeader("Authorization", SupabaseConfig::getServiceRoleKey().toUtf8());
+
+    networkManager = new QNetworkAccessManager(this);
+    QNetworkReply *uploadReply = networkManager->put(uploadRequest, fileData);
+    connect(uploadReply, &QNetworkReply::finished, this, [=]() {
+        if (uploadReply->error() != QNetworkReply::NoError) {
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "PDF file upload failed.",
+                "Upload Failed",
+                "OK"
+                );
+            qDebug() << "File Upload Error: " << uploadReply->errorString();
         } else {
-            qDebug() << "File uploaded successfully!";
-            QString fileUrl = "https://xubfmxtcefkzpfjytavd.supabase.co/storage/v1/object/public/assignments/" + QFileInfo(filePath).fileName();
+            qDebug() << "PDF uploaded. Proceeding to metadata...";
+            QString fileUrl = SupabaseConfig::getPublicLectureUrl() + fileName;
             insertFileMetadata(fileUrl);
         }
-        reply->deleteLater();
+        uploadReply->deleteLater();
     });
 }
 
 void UploadPdf::insertFileMetadata(const QString &fileUrl) {
-    // Prepare metadata for insertion into the Supabase database
     QJsonObject json;
-    json["teacher_id"] = uniqueId;  // Replace with actual teacher ID
-    json["file_name"] = QFileInfo(filePath).fileName();
+    json["teacher_id"] = uniqueId;
+    json["file_description"] = descriptionInput->toPlainText();
+    json["deadline"] = deadlineInput->dateTime().toString(Qt::ISODate);
     json["file_url"] = fileUrl;
-    json["file_description"] = descInput->toPlainText();
     json["file_type"] = "pdf";
-    json["course_code"]=courseDropdown->currentText();
-    // Create the database request
-    QNetworkRequest dbRequest(QUrl("https://xubfmxtcefkzpfjytavd.supabase.co/rest/v1/files"));
-    dbRequest.setRawHeader("Authorization", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1YmZteHRjZWZrenBmanl0YXZkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY3NjI0NSwiZXhwIjoyMDU5MjUyMjQ1fQ.ujizd3now55PzNIbkEeH9xR3LOoz1JxWaJlUrrAnOTs");
-    dbRequest.setRawHeader("apikey", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1YmZteHRjZWZrenBmanl0YXZkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY3NjI0NSwiZXhwIjoyMDU5MjUyMjQ1fQ.ujizd3now55PzNIbkEeH9xR3LOoz1JxWaJlUrrAnOTs");
-    dbRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    json["course_code"] = courseDropdown->currentText();
+    qDebug() << "FULL JSON:" << QJsonDocument(json).toJson(QJsonDocument::Indented);
+    qDebug()<< "deadline"<<deadlineInput->dateTime().toString(Qt::ISODate);
+    QNetworkRequest request((QUrl(SupabaseConfig::getFilesApiUrl())));
+    request.setRawHeader("Authorization", SupabaseConfig::getServiceRoleKey().toUtf8());
+    request.setRawHeader("apikey", SupabaseConfig::getApiKey().toUtf8());
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QNetworkReply *reply = manager->post(dbRequest, QJsonDocument(json).toJson());
-
+    QNetworkReply *reply = networkManager->post(request, QJsonDocument(json).toJson());
     connect(reply, &QNetworkReply::finished, this, [=]() {
         if (reply->error() != QNetworkReply::NoError) {
-            qDebug() << "Error inserting metadata:" << reply->errorString();
-            QMessageBox::warning(this, "Metadata Insertion Failed", "Failed to insert metadata into the database.");
+            qDebug() << "Supabase response:" << reply->readAll();
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "Failed to upload metadata.",
+                "Upload Failed",
+                "OK"
+                );
+            qDebug() << "Upload error: " << reply->errorString();
         } else {
-            qDebug() << "File metadata inserted successfully!";
-            QMessageBox::information(this, "Upload", "File and metadata uploaded successfully!");
+            MessageBoxUtil::showCustomMessage(
+                this,
+                "PDF uploaded successfully!",
+                "Success",
+                "OK"
+                );
+            qDebug() << "Upload successful!";
         }
         reply->deleteLater();
     });

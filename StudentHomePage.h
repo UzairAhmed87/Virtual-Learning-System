@@ -14,41 +14,49 @@
 #include <QStackedWidget>
 #include <QString>
 #include "allCourses.h"
+#include "AllLecture.h"
+#include "AllAssignments.h"
+#include <QGraphicsDropShadowEffect>
+#include "StudentAllCourses.h"
 
 class StudentHomePage : public QWidget {
     Q_OBJECT
 
 public:
-    explicit StudentHomePage(const QString &userEmail="",QWidget *parent = nullptr);
+    explicit StudentHomePage(const QString &userEmail="", QWidget *parent = nullptr);
     ~StudentHomePage();
+
 private:
-    // Top Bar Widgets
+    // Main Widgets
     QWidget *homePageWidget;
+    QWidget *welcomeWidget;
+    QWidget *buttonsWidget;
     ProfilePage *profilePage;
     QStackedWidget *stackWidget;
-    QHBoxLayout *topLayout;
-    QLabel *logoLabel;
-    QPushButton *homeButton;
-    QPushButton *profileButton;
-    QPushButton *logoutButton;
+    TopBar *topBar;
+    StudentsAllCourses *allcourses;
+    UploadPage *allLecturesPage;
+    AllAssignments *allAssignmentsPage;  // Added for assignments page
 
-    // Buttons Grid Widgets
-    QWidget *buttonsWidget;
+    // Layouts
+    QVBoxLayout *mainLayout;
     QGridLayout *buttonsLayout;
 
-    // Main Layout
-    QVBoxLayout *mainLayout;
-    TopBar *topBar;
+    // Data
     QString email;
-    CourseWidget *allcourses;
     QString uniqueId;
-    // Helper function to create the buttons grid
+
+    // Helper functions
+    void createWelcomeWidget();
     void createButtonsGrid();
+    void setupMainLayout();
+
 private slots:
     void handleButtonClick(const QString &buttonText);
     void gotoBackPage();
     void gotoHomePage();
     void openProfilePage();
+
 signals:
     void logoutRequested();
 };

@@ -7,8 +7,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
 
-    setMinimumSize(800,500);
-    setStyleSheet("background-color: #0d1b2a;");
+     setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint);
+    setStyleSheet("background-color: #white;");
     setContentsMargins(0,0,0,0);
     stackWidget = new QStackedWidget(this);
     setCentralWidget(stackWidget);
@@ -17,9 +17,10 @@ MainWindow::MainWindow(QWidget *parent)
     wrapperWidget = new QWidget();
     QVBoxLayout *wrapperLayout = new QVBoxLayout(wrapperWidget);
 
-    wrapperLayout->addStretch();  // Push content down
-    wrapperLayout->addWidget(loginPage, 0, Qt::AlignHCenter);  // Center horizontally
-    wrapperLayout->addStretch();  // Push content up
+    wrapperLayout->setContentsMargins(0, 0, 0, 0); // Remove any margins
+    wrapperLayout->setSpacing(0);
+    wrapperLayout->addWidget(loginPage); // Let it expand
+
 
     wrapperWidget->setLayout(wrapperLayout);
 

@@ -49,7 +49,7 @@ void MessageBoxUtil::setupMessageBox(QMessageBox& msgBox,
     msgBox.setText(message);
 
     // If an image path is provided, set the image in the message box
-    QString fixedImagePath = "../images/icon.png";  // 💡 Use resource system if possible
+    QString fixedImagePath = "images/icon.png";  // 💡 Use resource system if possible
     QPixmap pixmap(fixedImagePath);
     if (!pixmap.isNull()) {
         msgBox.setIconPixmap(pixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation));

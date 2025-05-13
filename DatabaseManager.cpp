@@ -4,10 +4,10 @@
 
 DatabaseManager::DatabaseManager() {
     // 🔥 Hardcoded database credentials (CHANGE THESE TO MATCH YOUR DB)
-    QString host = "localhost";
-    QString dbName = "vls_db";
-    QString user = "vls_admin";
-    QString password = "Str0ngP@ssw0rd!";
+    QString host = "ep-ancient-morning-a48hzu0g-pooler.us-east-1.aws.neon.tech";
+    QString dbName = "neondb";
+    QString user = "neondb_owner";
+    QString password = "npg_PqO8nbkQ6FrG";
     int port = 5432;  // PostgreSQL default port
 
     // Debugging output
@@ -23,6 +23,7 @@ DatabaseManager::DatabaseManager() {
     db.setDatabaseName(dbName);
     db.setUserName(user);
     db.setPassword(password);
+    db.setConnectOptions("sslmode=require");
 
     if (!db.open()) {
         qDebug() << "❌ Database connection failed: " << db.lastError().text();

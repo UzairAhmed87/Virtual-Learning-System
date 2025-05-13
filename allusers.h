@@ -14,6 +14,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QComboBox>
 #include "TopBar.h"
 
 
@@ -54,6 +55,7 @@ private:
     void updateUser(int row); // Function to update user details
     void deleteUser(int row); // Function to delete user
     void updateUserCount();
+    void filterUsers();
 signals:
     void backButtonClicked();
 

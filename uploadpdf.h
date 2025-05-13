@@ -2,45 +2,59 @@
 #define UPLOADPDF_H
 
 #include <QWidget>
-#include <QApplication>
 #include <QVBoxLayout>
-#include <QMessageBox>
-#include <QPushButton>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <QStackedWidget>
-#include <QFileDialog>
-#include <QPixmap>
-#include <QDebug>
-#include <QDesktopServices>
-#include <QUrl>
-#include <QTextEdit>
-#include "TopBar.h"
+#include <QPushButton>
 #include <QComboBox>
+#include <QTextEdit>
+#include <QFile>
+#include <QFileDialog>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QMessageBox>
+#include <QDesktopServices>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QLineEdit>
+#include "DatabaseManager.h"
+#include "mesgboxutil.h"
+#include "SupabaseConfig.h"
 
 class UploadPdf : public QWidget {
     Q_OBJECT
+
 public:
-    explicit UploadPdf(const QString &ID="",QWidget *parent = nullptr,QWidget *topBar=nullptr);
+    explicit UploadPdf(const QString &ID, QWidget *parent = nullptr, QWidget *topBar = nullptr);
 
 private slots:
-    void selectFile();      // Open PDF
-    void resetScreen();     // Reset UI
-    void openPDF();         // Open selected PDF
+    void selectFile();
     void uploadFile();
-    void insertFileMetadata(const QString &fileUrl);
+    void resetScreen();
+    void openPDF();
     void loadCourses();
-private:
-    QComboBox *courseDropdown;
-    QString filePath;
-    QLabel *pdfFileLabel;   // Label to show selected file path
-    QPushButton *selectButton, *uploadButton, *resetButton;
-    // TopBar *topBar;
-    QPushButton *openButton;
-    QTextEdit *descInput;
-    QPushButton *fileButton;
-    QString uniqueId;
+
 signals:
     void backButtonClicked();
+
+private:
+    void insertFileMetadata(const QString &fileUrl);
+
+    QString filePath;
+    QString uniqueId;
+    QLabel *pdfFileLabel;
+    QPushButton *fileButton;
+    QPushButton *uploadButton;
+    QPushButton *resetButton;
+    QComboBox *courseDropdown;
+    QTextEdit *descInput;
+    QLineEdit *titleInput;
+    QTextEdit *descriptionInput;
+    QDateTimeEdit *deadlineInput;
+    QNetworkAccessManager *networkManager;
 };
 
 #endif // UPLOADPDF_H

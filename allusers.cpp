@@ -114,14 +114,13 @@ void AllUsers::setupUI() {
 
     // **Table Setup**
     table = new QTableWidget(0, 8, this);
-    table->setHorizontalHeaderLabels({"ID", "Name", "Gender", "Department","Email","Phone","Fee Status","Actions"});
+    table->setHorizontalHeaderLabels({"ID", "Name", "Gender", "Department", "Email", "Phone", "Fee Status", "Actions"});
     table->setStyleSheet("background-color: #1B263B; color: white; font-size: 14px;");
-    table->horizontalHeader()->setStyleSheet("background-color: #162C5D; color: white; font-weight: bold;");
+    table->horizontalHeader()->setStyleSheet("QHeaderView::section { background-color: #162c5d; color: white; font-weight: bold; }");
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     populateTable(students);  // Show students by default
 
-
-    totalUsersLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: white; background-color:#1B263B;");
+    totalUsersLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: white; background-color: #1B263B;");
 
 
     QHBoxLayout *categoryLayout = new QHBoxLayout();
@@ -242,14 +241,7 @@ void AllUsers::setupHoverEffect() {
 void AllUsers::setupConnections() {
     connect(searchBar, &QLineEdit::textChanged, this, &AllUsers::searchUser);
     connect(refreshBtn, &QPushButton::clicked, this, &AllUsers::refreshTable);
-    connect(filterBtn, &QPushButton::clicked, [=]() {
-        MessageBoxUtil::showCustomMessage(
-            this,
-            "Filtering functionality will be added soon!",
-            "Filter",
-            "OK"
-            );
-    });
+    connect(filterBtn, &QPushButton::clicked, this, &AllUsers::filterUsers);
 }
 
 void AllUsers::populateTable(const QStringList &data) {
@@ -337,7 +329,7 @@ void AllUsers::deleteUser(int row) {
             updateUserCount();
             MessageBoxUtil::showCustomMessage(
                 this,
-                "✅ User Deleted Successfully!",
+                "âœ… User Deleted Successfully!",
                 "Success",
                 "OK"
                 );
@@ -359,16 +351,106 @@ void AllUsers::deleteUser(int row) {
 void AllUsers::updateUser(int row) {
     if (row < 0 || row >= table->rowCount()) return;
 
-    QString newName = QInputDialog::getText(this, "Update User", "Enter new name:");
-    if (!newName.isEmpty()) {
-        table->item(row, 1)->setText(newName);
-        MessageBoxUtil::showCustomMessage(
-            this,
-            "User updated successfully!",
-            "Success",
-            "OK"
-            );
+    QString style = R"(
+        QDialog {
+            background-color: #0D1B2A;
+            color: white;
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+        }
+        QLineEdit, QComboBox {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            padding: 8px;
+            border: 1px solid #4a90e2;
+            border-radius: 5px;
+            font-size: 14px;
+            min-height: 25px;
+        }
+        QLabel {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        QPushButton {
+            background-color: #4a90e2;
+            color: white;
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        QPushButton:hover {
+            background-color: #3b7fc4;
+        }
+    )";
+
+    QDialog dialog(this);
+    dialog.setStyleSheet(style);
+    dialog.setWindowTitle("Update User");
+
+    // Adjust dialog size based on category
+    if (currentCategory == "Teachers") {
+        dialog.setFixedSize(400, 200); // Smaller for teachers since fewer fields
+    } else {
+        dialog.setFixedSize(400, 300); // Original size for students
     }
+
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+
+    // Add some spacing at the top for better appearance
+    layout->addSpacing(10);
+
+    // Common fields for both users
+    QLabel* nameLabel = new QLabel("Enter new name:");
+    QLineEdit* nameEdit = new QLineEdit();
+    nameEdit->setText(table->item(row, 1)->text());
+
+    layout->addWidget(nameLabel);
+    layout->addWidget(nameEdit);
+
+    // Fee status only for students
+    QLabel* feeStatusLabel = nullptr;
+    QComboBox* feeStatusCombo = nullptr;
+
+    if (currentCategory == "Students") {
+        feeStatusLabel = new QLabel("Update Fee Status:");
+        feeStatusCombo = new QComboBox();
+        feeStatusCombo->addItem("Paid");
+        feeStatusCombo->addItem("Unpaid");
+
+        layout->addWidget(feeStatusLabel);
+        layout->addWidget(feeStatusCombo);
+    }
+
+    QPushButton* saveButton = new QPushButton("Save");
+    layout->addWidget(saveButton);
+
+    // Add some spacing at the bottom for better appearance
+    layout->addSpacing(10);
+
+    QObject::connect(saveButton, &QPushButton::clicked, [&]() {
+        QString newName = nameEdit->text();
+
+        if (!newName.isEmpty()) {
+            table->item(row, 1)->setText(newName);  // Name is always in column 1
+
+            // Update fee status if implemented
+            if (currentCategory == "Students" && feeStatusCombo) {
+                QString newFeeStatus = feeStatusCombo->currentText();
+                // Update fee status in the appropriate column if needed
+                // table->item(row, X)->setText(newFeeStatus);
+            }
+
+            QMessageBox::information(this, "Success", "User updated successfully!");
+            dialog.accept();
+        }
+    });
+
+    dialog.exec();
 }
 
 
@@ -435,4 +517,183 @@ void AllUsers::updateUserCount() {
     if (!table) return; // Ensure table exists
     int rowCount = table->rowCount();
     totalUsersLabel->setText("Total Users: " + QString::number(rowCount));
+}
+void AllUsers::filterUsers() {
+    // Check if we're in Teachers category - if so, show styled message and return
+    if (currentCategory == "Teachers") {
+        // Create a custom styled dialog instead of a message box
+        QDialog notAvailableDialog(this);
+        notAvailableDialog.setWindowTitle("Filter Unavailable");
+        notAvailableDialog.setFixedSize(400, 180);
+
+        // Apply the same styling as other dialogs
+        QString style = R"(
+            QDialog {
+                background-color: #0D1B2A;
+                color: white;
+                border: 2px solid #4a90e2;
+                border-radius: 10px;
+            }
+            QLabel {
+                color: white;
+                font-size: 15px;
+                font-weight: bold;
+                margin: 10px;
+                qproperty-alignment: AlignCenter;
+            }
+            QPushButton {
+                background-color: #4a90e2;
+                color: white;
+                border-radius: 5px;
+                padding: 12px;
+                font-size: 16px;
+                font-weight: bold;
+                margin-top: 20px;
+                min-width: 100px;
+            }
+            QPushButton:hover {
+                background-color: #3b7fc4;
+            }
+        )";
+        notAvailableDialog.setStyleSheet(style);
+
+        // Create layout and add components
+        QVBoxLayout* layout = new QVBoxLayout(&notAvailableDialog);
+        layout->addSpacing(15);
+
+        QLabel* messageLabel = new QLabel("Filtering is not available for teachers at this time.", &notAvailableDialog);
+        layout->addWidget(messageLabel);
+
+        QPushButton* okButton = new QPushButton("OK", &notAvailableDialog);
+        layout->addWidget(okButton, 0, Qt::AlignCenter);
+        layout->addSpacing(15);
+
+        // Connect button to close dialog
+        QObject::connect(okButton, &QPushButton::clicked, &notAvailableDialog, &QDialog::accept);
+
+        notAvailableDialog.exec();
+        return;
+    }
+
+    // Continue with student filtering using the same styling as update dialog
+    QString style = R"(
+        QDialog {
+            background-color: #0D1B2A;
+            color: white;
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+        }
+        QLineEdit, QComboBox {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            padding: 8px;
+            border: 1px solid #4a90e2;
+            border-radius: 5px;
+            font-size: 14px;
+            min-height: 25px;
+        }
+        QLabel {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        QPushButton {
+            background-color: #4a90e2;
+            color: white;
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        QPushButton:hover {
+            background-color: #3b7fc4;
+        }
+    )";
+
+    // Create custom dialog for filter type selection
+    QDialog typeDialog(this);
+    typeDialog.setWindowTitle("Filter Students");
+    typeDialog.setFixedSize(400, 200);
+    typeDialog.setStyleSheet(style);
+
+    QVBoxLayout* typeLayout = new QVBoxLayout(&typeDialog);
+    typeLayout->addSpacing(10);
+
+    QLabel* typeLabel = new QLabel("Choose filter type:", &typeDialog);
+    typeLayout->addWidget(typeLabel);
+
+    QComboBox* typeCombo = new QComboBox(&typeDialog);
+    typeCombo->addItem("Filter by Department");
+    typeCombo->addItem("Filter by Batch");
+    typeLayout->addWidget(typeCombo);
+
+    QPushButton* nextButton = new QPushButton("Next", &typeDialog);
+    typeLayout->addWidget(nextButton);
+    typeLayout->addSpacing(10);
+
+    QString filterType;
+    QObject::connect(nextButton, &QPushButton::clicked, [&]() {
+        filterType = typeCombo->currentText();
+        typeDialog.accept();
+    });
+
+    if (typeDialog.exec() != QDialog::Accepted || filterType.isEmpty()) {
+        return; // Exit if canceled
+    }
+
+    // Prepare filter options based on type selected
+    QStringList filterOptions;
+    QString filterPrompt;
+
+    if (filterType == "Filter by Department") {
+        filterPrompt = "Choose a Department:";
+        filterOptions = {"All", "Computer Science", "Mathematics", "Physics"};
+    } else {
+        filterPrompt = "Choose a Batch:";
+        filterOptions = {"All", "2021", "2022", "2023", "2024"};
+    }
+
+    // Create second dialog for selecting the specific filter
+    QDialog filterDialog(this);
+    filterDialog.setWindowTitle("Select " + filterType.mid(filterType.indexOf("by") + 3));
+    filterDialog.setFixedSize(400, 200);
+    filterDialog.setStyleSheet(style);
+
+    QVBoxLayout* filterLayout = new QVBoxLayout(&filterDialog);
+    filterLayout->addSpacing(10);
+
+    QLabel* filterLabel = new QLabel(filterPrompt, &filterDialog);
+    filterLayout->addWidget(filterLabel);
+
+    QComboBox* filterCombo = new QComboBox(&filterDialog);
+    filterCombo->addItems(filterOptions);
+    filterLayout->addWidget(filterCombo);
+
+    QPushButton* applyButton = new QPushButton("Apply Filter", &filterDialog);
+    filterLayout->addWidget(applyButton);
+    filterLayout->addSpacing(10);
+
+    QString selectedFilter;
+    QObject::connect(applyButton, &QPushButton::clicked, [&]() {
+        selectedFilter = filterCombo->currentText();
+        filterDialog.accept();
+    });
+
+    if (filterDialog.exec() == QDialog::Accepted && !selectedFilter.isEmpty()) {
+        QStringList filteredList;
+
+        // We only filter students at this point
+        const QStringList &data = students;
+
+        for (const QString &entry : data) {
+            if (selectedFilter == "All" || entry.contains(selectedFilter, Qt::CaseInsensitive)) {
+                filteredList << entry;
+            }
+        }
+
+        populateTable(filteredList);
+    }
 }

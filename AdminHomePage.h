@@ -2,41 +2,69 @@
 #define ADMINHOMEPAGE_H
 
 #include <QWidget>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QGridLayout>
+#include <QPixmap>
+#include <QGraphicsEffect>
+#include <QPropertyAnimation>
+#include <QStackedWidget>
+#include <QString>
 #include "registerUser.h"
 #include "createcourse.h"
 #include "TopBar.h"
 #include "allusers.h"
 #include "ProfilePage.h"
-#include <QStackedWidget>
-#include <QString>
 #include "allCourses.h"
 #include "enrollStudent.h"
+
 class AdminHomePage : public QWidget {
     Q_OBJECT
+
+public:
+    explicit AdminHomePage(const QString &userEmail="", QWidget *parent = nullptr);
+    ~AdminHomePage();
+
+signals:
+    void logoutRequested();
+
 private slots:
     void handleButtonClick(const QString &buttonText);
     void gotoBackPage();
     void gotoHomePage();
     void openProfilePage();
-    // void handleLogout();
-public:
-    explicit AdminHomePage(const QString &userEmail="",QWidget *parent = nullptr);
-    ~AdminHomePage();
-    // In AdminHomePage.h (and similarly for other pages)
-signals:
-    void logoutRequested();
+
+    //protected:
+    // bool eventFilter(QObject *obj, QEvent *event) override;
+
 private:
+    // UI Components
     QWidget *homePageWidget;
-    ProfilePage *profilePage;
-    QStackedWidget *stackWidget;
+    QWidget *buttonsWidget;
+    QWidget *welcomeWidget;
     QVBoxLayout *mainLayout;
+    QGridLayout *buttonsLayout;
+    QStackedWidget *stackWidget;
+    TopBar *topBar;
+
+    // Page components
     RegisterUserForm *registerUser;
     createcourse *course;
-    CourseWidget *allcourses;
-    EnrollStudent *enroll;
     AllUsers *users;
+    CourseWidget *allcourses;
+    ProfilePage *profilePage;
+    EnrollStudent *enroll;
+
+    // User data
     QString email;
-    TopBar *topBar;
+
+    // Helper methods
+    void createButtonsGrid();
+    void createWelcomeWidget();
+    QGraphicsDropShadowEffect* createGlowEffect(QWidget *widget);
+    void animateButtonClick(QPushButton *button);
 };
 
 #endif // ADMINHOMEPAGE_H

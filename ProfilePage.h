@@ -42,6 +42,7 @@ private:
     QString batch;
     QString firstName;
     QString lastName;
+    QStringList courses; // To store the list of courses for teachers
     // TopBar *topBar;
 
     // Helper function to create the main content

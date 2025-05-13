@@ -1,54 +1,66 @@
-#ifndef UPLOADLECTRE_H
-#define UPLOADLECTRE_H
+#ifndef UPLOADLECTURE_H
+#define UPLOADLECTURE_H
 
 #include <QWidget>
-#include <QEvent>
-#include <QApplication>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QFile>
+#include <QFileDialog>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QMessageBox>
 #include <QMediaPlayer>
 #include <QVideoWidget>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QFileDialog>
-#include <QLineEdit>
-#include <QTextEdit>
-#include <QLabel>
 #include <QStackedWidget>
-#include "TopBar.h"
-#include <QNetworkAccessManager>
-#include <QComboBox>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QEvent> // Added to define QEvent fully
+#include "DatabaseManager.h"
+#include "mesgboxutil.h"
+#include "SupabaseConfig.h"
+
 class UploadLecture : public QWidget {
     Q_OBJECT
 
 public:
-    explicit UploadLecture(const QString &uniqueId="",QWidget *parent = nullptr,QWidget *topBar=nullptr);
-
-protected:
-    bool eventFilter(QObject *obj, QEvent *event) override;
+    explicit UploadLecture(const QString &Id, QWidget *parent = nullptr, QWidget *topBar = nullptr);
 
 private slots:
     void selectFile();
     void startUpload();
     void resetScreen();
-    void togglePlayback();
-    void handleUploadReply();
     void handleFileUploadReply();
+    void handleUploadReply();
+    void togglePlayback();
     void loadCourses();
+
+signals:
+    void backButtonClicked();
+
 private:
+    bool eventFilter(QObject *obj, QEvent *event);
+
+    QString filePath;
+    QString uniqueId;
+    QWidget *functionalWindow;
+    QLabel *placeholderLabel;
+    QPushButton *selectButton;
+    QPushButton *uploadButton;
+    QPushButton *cancelButton;
+    QPushButton *pauseButton;
     QComboBox *courseDropdown;
-    QPushButton *uploadButton, *cancelButton, *selectButton, *pauseButton;
     QLineEdit *titleInput;
-    QTextEdit *descriptionInput;
     QMediaPlayer *mediaPlayer;
     QVideoWidget *videoWidget;
     QStackedWidget *previewStack;
-    QString uniqueId;
-    QString filePath;
-    // TopBar *topBar;
-    QWidget *functionalWindow;
-    QLabel *placeholderLabel;
-     QNetworkAccessManager *networkManager;
-signals:
-    void backButtonClicked();
+    QNetworkAccessManager *networkManager;
 };
 
 #endif // UPLOADLECTURE_H

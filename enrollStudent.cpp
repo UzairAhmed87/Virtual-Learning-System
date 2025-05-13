@@ -26,6 +26,7 @@ EnrollStudent::EnrollStudent(QWidget *parent,QWidget *topbar) : QWidget(parent) 
 
     connect(studentDropdown, &QComboBox::currentIndexChanged, this, &EnrollStudent::onStudentSelected);
     connect(enrollButton, &QPushButton::clicked, this, &EnrollStudent::enrollStudent);
+    connect(resetButton, &QPushButton::clicked, this, &EnrollStudent::resetForm);
 
     loadStudents();
 }
@@ -165,7 +166,7 @@ void EnrollStudent::setupUI() {
     }
     QPushButton:pressed { background-color: #1B263B; }
 )");
-    QPushButton *resetButton = new QPushButton("Reset");
+    resetButton = new QPushButton("Reset");
     resetButton->setStyleSheet(R"(
     QPushButton {
         background-color: #FF5C5C;
@@ -190,7 +191,7 @@ void EnrollStudent::setupUI() {
     buttonLayout->setSpacing(15);  // Space between buttons
     buttonLayout->setContentsMargins(0, 0, 0, 0);  // Add margin above buttons
     buttonLayout->setAlignment(Qt::AlignCenter);
-     QWidget *buttonContainer = new QWidget;
+    QWidget *buttonContainer = new QWidget;
     buttonContainer->setLayout(buttonLayout);
     QWidget *headerContainer = new QWidget();
     QVBoxLayout *headerLayout = new QVBoxLayout(headerContainer);
@@ -209,17 +210,17 @@ void EnrollStudent::setupUI() {
 
     this->setLayout(mainLayout);
 }
+
 void EnrollStudent::enrollStudent() {
     QString studentId = studentDropdown->currentData().toString();
+    qDebug()<<"Student Id:" << studentId;
     QString studentName = studentDropdown->currentText();  // Get student name
     QStringList selectedCourses;
-
     // Step 1: Get selected courses from the list
     for (int i = 0; i < courseListWidget->count(); ++i) {
         QListWidgetItem *item = courseListWidget->item(i);
         if (item->checkState() == Qt::Checked) {
             selectedCourses.append(item->data(Qt::UserRole).toString());
-
         }
     }
 
@@ -243,41 +244,87 @@ void EnrollStudent::enrollStudent() {
     }
 
     // Begin transaction to ensure data consistency
-    QSqlQuery query;
     db.transaction();
 
-    bool enrollmentSuccess = true;
-    for (const QString &course : selectedCourses) {
-        // Prepare query to insert enrollment record for the student and course
-        query.prepare("INSERT INTO vls_schema.enrollments (student_id,course_code)"
-                      "SELECT :studentId,:courseName");
-        query.bindValue(":studentId", studentId);
-        query.bindValue(":courseName", course);
+    QStringList successfulCourses;
+    QStringList failedCourses;
 
-        // Execute the query for each course
-        if (!query.exec()) {
-            qDebug() << "Error enrolling student in course: " << query.lastError().text();
-            enrollmentSuccess = false;
-            break;
+    for (const QString &courseCode : selectedCourses) {
+        // Check if student is already enrolled in this course
+            qDebug() << "Trying to enroll: Student ID =" << studentId << "Course Code =" << courseCode;
+        QSqlQuery checkQuery;
+        checkQuery.prepare("SELECT COUNT(*) FROM vls_schema.enrollments WHERE student_id = :studentId AND course_code = :courseCode");
+        checkQuery.bindValue(":studentId", studentId.trimmed());
+        checkQuery.bindValue(":courseCode", courseCode.trimmed());
+
+        if (checkQuery.exec() && checkQuery.next()) {
+            int count = checkQuery.value(0).toInt();
+            if (count > 0) {
+                // Student is already enrolled in this course
+                failedCourses.append(courseCode);
+                continue;
+            }
         }
+
+        // Insert enrollment record
+        QSqlQuery insertQuery;
+        // query.prepare("INSERT INTO vls_schema.users (first_name, last_name, email, password_hash, phone, gender, role, department, unique_id, fee_status) "
+        //               "SELECT :first_name, :last_name, :email, crypt(:password, gen_salt('bf')), :phone, :gender, :role, :department, :unique_id, :fee_status");
+        insertQuery.prepare("INSERT INTO vls_schema.enrollments (student_id, course_code) VALUES (:studentId, :courseCode)");
+
+        insertQuery.bindValue(":studentId", studentId.trimmed());
+        insertQuery.bindValue(":courseCode", courseCode.trimmed());
+        qDebug() << "Student ID: " << studentId << " | Course Code: " << courseCode;
+
+        if (!insertQuery.exec()) {
+            qDebug() << "Insert failed:" << insertQuery.lastError().text();
+            db.rollback();  // <- CRUCIAL
+            MessageBoxUtil::showCustomMessage(this, "Database error occurred during enrollment. Transaction rolled back.", "Error", "OK");
+            return;
+        }
+
+        successfulCourses.append(courseCode);
+
     }
 
-    // Commit the transaction if all queries are successful
-    if (enrollmentSuccess) {
-        db.commit();
-        // Display success message
-        MessageBoxUtil::showCustomMessage(this, "Student " + studentName + " has been enrolled in selected courses.", "Enrollment Successful", "OK");
+    // Commit transaction if at least one enrollment was successful
+    qDebug() << "Successful enrollments:" << successfulCourses;
+    qDebug() << "Failed enrollments:" << failedCourses;
+    if (!successfulCourses.isEmpty()) {
+        if (db.commit()) {
+            qDebug() << "Transaction committed successfully.";
+        } else {
+            qDebug() << "Commit failed:" << db.lastError().text();
+        }
+
+        QString message;
+        if (failedCourses.isEmpty()) {
+            message = "Student has been successfully enrolled in all selected courses.";
+        } else {
+            message = "Student has been enrolled in some courses. However, enrollment failed for: \n" + failedCourses.join(", ") +
+                      "\n(Student may already be enrolled in these courses)";
+        }
+
+        MessageBoxUtil::showCustomMessage(this, message, "Enrollment Status", "OK");
+        resetForm(); // Clear the form after successful enrollment
     } else {
-        db.rollback();  // Rollback if there was any error
-        MessageBoxUtil::showCustomMessage(this, "An error occurred while enrolling the student.", "Enrollment Failed", "OK");
-    }
-
-    // Clear selections after enrollment
-    for (int i = 0; i < courseListWidget->count(); ++i) {
-        courseListWidget->item(i)->setCheckState(Qt::Unchecked);
+        db.rollback();
+        MessageBoxUtil::showCustomMessage(this, "Failed to enroll student in any courses. Student may already be enrolled.",
+                                          "Enrollment Failed", "OK");
     }
 }
 
+void EnrollStudent::resetForm() {
+    // Reset course selections
+    for (int i = 0; i < courseListWidget->count(); ++i) {
+        courseListWidget->item(i)->setCheckState(Qt::Unchecked);
+    }
+
+    // Reset student selection (return to index 0)
+    if (studentDropdown->count() > 0) {
+        studentDropdown->setCurrentIndex(0);
+    }
+}
 
 void EnrollStudent::loadStudents() {
     studentDropdown->clear(); // Clear old items
@@ -286,18 +333,26 @@ void EnrollStudent::loadStudents() {
         MessageBoxUtil::showCustomMessage(this, "Database connection is not open!", "Database Error", "OK");
         return;
     }
+
     QSqlQuery query;
-    if (query.exec("SELECT unique_id FROM vls_schema.users WHERE role='student'")) {
+    if (query.exec("SELECT unique_id, first_name, last_name FROM vls_schema.users WHERE role='student'")) {
         QStringList ids;
+        QStringList displayNames;
+
         while (query.next()) {
             QString id = query.value(0).toString();
-            studentDropdown->addItem(id, id);  // Show ID and store ID as data
+            QString firstName = query.value(1).toString();
+            QString lastName = query.value(2).toString();
+            QString displayName = id + " - " + firstName + " " + lastName;
+
+            studentDropdown->addItem(displayName, id);  // Show name with ID, store ID as data
             ids << id;
+            displayNames << displayName;
         }
 
-        // Update completer
+        // Update completer with display names for better search
         QCompleter *completer = studentDropdown->completer();
-        completer->setModel(new QStringListModel(ids, completer));
+        completer->setModel(new QStringListModel(displayNames, completer));
     } else {
         qDebug() << "Error loading students:" << query.lastError().text();
         MessageBoxUtil::showCustomMessage(this, "Error loading students: " + query.lastError().text(), "Database Error", "OK");
@@ -310,7 +365,7 @@ void EnrollStudent::loadCoursesForStudent(const QString &studentId) {
     // Step 1: Fetch the department of the student
     QSqlQuery query;
     query.prepare("SELECT department FROM vls_schema.users WHERE unique_id = :studentId");
-    query.bindValue(":studentId", studentId);
+    query.bindValue(":studentId", studentId.trimmed());
 
     QString studentDepartment;
     if (query.exec() && query.next()) {
@@ -321,21 +376,53 @@ void EnrollStudent::loadCoursesForStudent(const QString &studentId) {
         return;
     }
 
-    // Step 2: Fetch courses from the database where the department matches
-    query.prepare("SELECT course_name, course_code FROM vls_schema.courses WHERE department = :department");
+    // Step 2: Fetch available courses for the department
+    query.prepare("SELECT c.course_name, c.course_code, c.description FROM vls_schema.courses c "
+                  "WHERE c.department = :department "
+                  "ORDER BY c.course_name");
     query.bindValue(":department", studentDepartment);
 
     if (query.exec()) {
+        // Step 3: Get courses student is already enrolled in
+        QSqlQuery enrolledQuery;
+        enrolledQuery.prepare("SELECT course_code FROM vls_schema.enrollments WHERE student_id = :studentId");
+        enrolledQuery.bindValue(":studentId", studentId.trimmed());
+
+        QSet<QString> enrolledCourses;
+        if (enrolledQuery.exec()) {
+            while (enrolledQuery.next()) {
+                enrolledCourses.insert(enrolledQuery.value(0).toString());
+            }
+        } else {
+            qDebug() << "Error fetching enrolled courses:" << enrolledQuery.lastError().text();
+        }
+
+        // Step 4: Display available courses with enrollment status
         while (query.next()) {
             QString courseName = query.value(0).toString();
             QString courseCode = query.value(1).toString();
+            QString description = query.value(2).toString();
 
-            QListWidgetItem *item = new QListWidgetItem(courseName);  // Show name
+            // Create displayed text with course code and name
+            QString displayText = courseName + " (" + courseCode + ")";
+
+            QListWidgetItem *item = new QListWidgetItem(displayText);
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(Qt::Unchecked);
-            item->setData(Qt::UserRole, courseCode);  // Store course code for DB use
 
-            courseListWidget->addItem(item);  // ✅ Only add once
+            // If student is already enrolled, show it differently and disable checkbox
+            if (enrolledCourses.contains(courseCode)) {
+                item->setCheckState(Qt::Checked);
+                item->setFlags(item->flags() & ~Qt::ItemIsEnabled); // Disable the item
+                item->setText(displayText + " [Already Enrolled]");
+                item->setBackground(QColor(0, 100, 0, 80)); // Dark green background
+            } else {
+                item->setCheckState(Qt::Unchecked);
+            }
+
+            item->setData(Qt::UserRole, courseCode);  // Store course code for DB use
+            item->setToolTip(description); // Show description on hover
+
+            courseListWidget->addItem(item);
         }
     } else {
         qDebug() << "Error fetching courses for department:" << query.lastError().text();
@@ -343,7 +430,6 @@ void EnrollStudent::loadCoursesForStudent(const QString &studentId) {
         return;
     }
 }
-
 
 // When a student is selected, update the department label and load courses
 void EnrollStudent::onStudentSelected(int index) {
@@ -360,7 +446,7 @@ void EnrollStudent::onStudentSelected(int index) {
     // Step 1: Fetch department of the selected student from the database
     QSqlQuery query;
     query.prepare("SELECT department FROM vls_schema.users WHERE unique_id = :studentId");
-    query.bindValue(":studentId", studentId);
+    query.bindValue(":studentId", studentId.trimmed());
 
     QString department;
     if (query.exec() && query.next()) {
@@ -379,5 +465,3 @@ void EnrollStudent::onStudentSelected(int index) {
     // Step 2: Load the courses for this student based on the department
     loadCoursesForStudent(studentId);  // This will load courses based on the department
 }
-
-

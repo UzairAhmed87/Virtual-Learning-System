@@ -17,10 +17,9 @@
 #include <QMessageBox>
 #include <QDebug>
 
-ProfilePage::ProfilePage(const QString &userEmail,QWidget *parent,QWidget *topBar) : QWidget(parent),email(userEmail) {
+ProfilePage::ProfilePage(const QString &userEmail, QWidget *parent, QWidget *topBar) : QWidget(parent), email(userEmail) {
     setWindowTitle("Profile Page");
     setMinimumSize(800, 500);
-    // topBar =  new TopBar(this);
     setStyleSheet("background-color: #0d1b2a;"); // Dark background
     QSqlDatabase db = DatabaseManager::getInstance().getDatabase();
     if (!db.isOpen()) {
@@ -28,8 +27,8 @@ ProfilePage::ProfilePage(const QString &userEmail,QWidget *parent,QWidget *topBa
         return;
     }
     QSqlQuery query;
-    query.prepare("SELECT unique_id, first_name, last_name,gender,phone,role,department,email,fee_status FROM vls_schema.users WHERE email = :email");
-    query.bindValue(":email",email);
+    query.prepare("SELECT unique_id, first_name, last_name, gender, phone, role, department, email, fee_status FROM vls_schema.users WHERE email = :email");
+    query.bindValue(":email", email);
     if (!query.exec()) {
         QMessageBox::critical(this, "Database Error", "Failed to retrieve users: " + query.lastError().text());
         return;
@@ -46,28 +45,44 @@ ProfilePage::ProfilePage(const QString &userEmail,QWidget *parent,QWidget *topBa
         phone = query.value("phone").toString();
         feeStatus = query.value("fee_status").toString();
     }
-    if(role == "student"){
-    QSqlQuery Batchquery;
-    Batchquery.prepare("SELECT EXTRACT(YEAR FROM registration_date) FROM vls_schema.users WHERE email = :email");
-    Batchquery.bindValue(":email", email);
 
-    if (Batchquery.exec() && Batchquery.next()) {
-        batch = Batchquery.value(0).toString();
-        qDebug() << "Registration Year:" << batch;
+    // Fetch batch for students
+    if (role == "student") {
+        QSqlQuery Batchquery;
+        Batchquery.prepare("SELECT EXTRACT(YEAR FROM created_at) FROM vls_schema.users WHERE email = :email");
+        Batchquery.bindValue(":email", email);
+        if (Batchquery.exec() && Batchquery.next()) {
+            batch = Batchquery.value(0).toString();
+            qDebug() << "Registration Year:" << batch;
+        }
     }
+
+    // Fetch courses for teachers
+    if (role == "teacher") {
+        QSqlQuery courseQuery;
+        courseQuery.prepare("SELECT course_name FROM vls_schema.courses WHERE teacher_id = :teacher_id");
+        courseQuery.bindValue(":teacher_id", uniqueId);
+        if (!courseQuery.exec()) {
+            QMessageBox::critical(this, "Database Error", "Failed to retrieve courses: " + courseQuery.lastError().text());
+            return;
+        }
+        while (courseQuery.next()) {
+            courses.append(courseQuery.value("course_name").toString());
+        }
+        qDebug() << "Courses taught:" << courses;
     }
-
-    // Create the top bar
-
 
     // Create the main content
     createMainContent();
+    QWidget *topBarPlaceholder = new QWidget();
+    topBarPlaceholder->setFixedHeight(topBar->height());
 
     // Main Layout
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0); // Remove margins
     layout->setSpacing(0); // Remove extra spacing
-    layout->addWidget(topBar);
+    layout->addWidget(topBarPlaceholder, 0, Qt::AlignTop);
+    // layout->addWidget(topBar);
     layout->addWidget(mainContent);
     setLayout(layout);
 }
@@ -132,24 +147,8 @@ void ProfilePage::createMainContent() {
     // Connect Upload Picture Button to a slot
     connect(uploadPictureButton, &QPushButton::clicked, this, &ProfilePage::uploadPicture);
 
-    // Change Password Button
-    QPushButton *changePasswordButton = new QPushButton("Change Password", mainContent);
-    changePasswordButton->setMinimumSize(150, 40);
-    changePasswordButton->setCursor(Qt::PointingHandCursor);
-    changePasswordButton->setStyleSheet(
-        "QPushButton {"
-        "   background-color: #1E90FF; color: white; font-size: 16px; font-weight: bold;"
-        "   border-radius: 5px; padding: 5px 10px; border: 2px solid #1E90FF;"
-        "} "
-        "QPushButton:hover {"
-        "   background: transparent; "
-        "} "
-        "QPushButton:pressed { background-color: #1B263B; }"
-        );
-
     // Add buttons to the buttons layout
     buttonsLayout->addWidget(uploadPictureButton);
-    buttonsLayout->addWidget(changePasswordButton);
 
     // Add buttons layout to the name layout
     nameLayout->addLayout(buttonsLayout);
@@ -210,23 +209,31 @@ void ProfilePage::createMainContent() {
     enrollmentDetailsLayout->addWidget(classDetailsLabel);
     enrollmentDetailsLayout->addWidget(IDLabel);
     enrollmentDetailsLayout->addWidget(roleLabel);
-    if(role == "student"){
 
-    QLabel *departmentLabel = new QLabel("<b>Department: </b>"+department, profileInfoFrame);
-    departmentLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+    if (role == "student") {
+        QLabel *departmentLabel = new QLabel("<b>Department: </b>"+department, profileInfoFrame);
+        departmentLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
 
-    QLabel *batchLabel = new QLabel("<b>Batch: </b>"+batch, profileInfoFrame);
-    batchLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+        QLabel *batchLabel = new QLabel("<b>Batch: </b>"+batch, profileInfoFrame);
+        batchLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
 
-    QLabel *feeStatusLabel = new QLabel("<b>Fee Status: </b>"+feeStatus, profileInfoFrame);
-    feeStatusLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
-    enrollmentDetailsLayout->addWidget(departmentLabel);
-    enrollmentDetailsLayout->addWidget(batchLabel);
-    enrollmentDetailsLayout->addWidget(feeStatusLabel);
+        QLabel *feeStatusLabel = new QLabel("<b>Fee Status: </b>"+feeStatus, profileInfoFrame);
+        feeStatusLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+        enrollmentDetailsLayout->addWidget(departmentLabel);
+        enrollmentDetailsLayout->addWidget(batchLabel);
+        enrollmentDetailsLayout->addWidget(feeStatusLabel);
+    } else if (role == "teacher") {
+        // QLabel *departmentLabel = new QLabel("<b>Department: </b>"+department, profileInfoFrame);
+        // departmentLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+
+        QString coursesText = courses.isEmpty() ? "None" : courses.join(", ");
+        QLabel *coursesLabel = new QLabel("<b>Courses: </b>"+coursesText, profileInfoFrame);
+        coursesLabel->setStyleSheet("color: white; font-size: 16px; background: transparent; border: none;");
+        coursesLabel->setWordWrap(true);
+
+        // enrollmentDetailsLayout->addWidget(departmentLabel);
+        enrollmentDetailsLayout->addWidget(coursesLabel);
     }
-    // Add widgets to the enrollment details layout
-
-
 
     // Add both layouts to the profile info layout
     profileInfoLayout->addLayout(personalDetailsLayout);
@@ -237,14 +244,11 @@ void ProfilePage::createMainContent() {
     mainLayout->addSpacing(20);
 }
 
-// Slot to handle Upload Picture button click
 void ProfilePage::uploadPicture() {
-    // Open a file dialog to select an image
     QString filePath = QFileDialog::getOpenFileName(this, "Select Profile Picture", "", "Images (*.png *.jpg *.jpeg)");
     if (!filePath.isEmpty()) {
-        // Load the selected image and scale it to fit the label
         QPixmap newProfilePicture(filePath);
         newProfilePicture = newProfilePicture.scaled(150, 150, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        profilePictureLabel->setPixmap(newProfilePicture);  // Set the new image to the label
+        profilePictureLabel->setPixmap(newProfilePicture);
     }
 }

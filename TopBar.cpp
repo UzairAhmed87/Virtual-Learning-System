@@ -21,7 +21,7 @@ TopBar::TopBar(QWidget *parent,const QString &email) : QWidget(parent),emailID(e
     setAttribute(Qt::WA_StyledBackground,true);
     // Logo
     QLabel *logoLabel = new QLabel(this);
-    QPixmap logoPixmap("../images/logo.png");
+    QPixmap logoPixmap("images/Logo.png");
     logoPixmap = logoPixmap.scaled(150, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     logoLabel->setPixmap(logoPixmap);
     logoLabel->setScaledContents(true);
