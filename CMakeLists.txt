@@ -50,6 +50,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         SupabaseConfig.h
         StudentAllCourses.cpp
         StudentAllCourses.h
+
     )
 target_link_libraries(FinalApp PRIVATE Qt6::Widgets Qt6::Sql Qt6::Multimedia Qt6::MultimediaWidgets)
 # Define target properties for Android with Qt 6 as:

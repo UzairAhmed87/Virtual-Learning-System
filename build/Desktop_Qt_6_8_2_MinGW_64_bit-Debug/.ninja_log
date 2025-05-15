@@ -1,0 +1,66 @@
+# ninja log v6
+51	1144	7683189578372312	FinalApp_autogen/timestamp	af58913ec11ab977
+8139	24790	7683187072792323	CMakeFiles/FinalApp.dir/mainwindow.cpp.obj	1a40d3d46c14c756
+1283	10590	7683161493869477	CMakeFiles/FinalApp.dir/allusers.cpp.obj	159613b490f70afb
+19187	28207	7683143399098682	CMakeFiles/FinalApp.dir/DatabaseManager.cpp.obj	139a16962b7da31e
+51	1144	7683189578372312	FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+51	1144	7683189578372312	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/timestamp	af58913ec11ab977
+8156	25433	7683187072961867	CMakeFiles/FinalApp.dir/TeacherHomePage.cpp.obj	aa869eb471d32cb
+1063	10266	7683165051587386	CMakeFiles/FinalApp.dir/LoginPage.cpp.obj	bb1fb82ec080d3f0
+51	1144	7683189578372312	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+11570	15578	7683189693564275	FinalApp.exe	5759645924265b90
+8150	25388	7683187072902034	CMakeFiles/FinalApp.dir/StudentHomePage.cpp.obj	d29be15b1c776e6b
+8145	25912	7683187072852162	CMakeFiles/FinalApp.dir/AdminPage.cpp.obj	5fb16dd04c6736a7
+51	120	7683143091801403	CMakeFiles/clean.additional	baedbe210acaa455
+8132	26938	7683187072722539	CMakeFiles/FinalApp.dir/FinalApp_autogen/mocs_compilation.cpp.obj	aaea5c306e4dd6df
+36951	48159	7683143576740165	CMakeFiles/FinalApp.dir/BackButton.cpp.obj	8cf4c207b3132472
+32295	49536	7683143530179438	CMakeFiles/FinalApp.dir/registerUser.cpp.obj	c2579b867f404ca5
+37755	54718	7683143584778667	CMakeFiles/FinalApp.dir/createcourse.cpp.obj	691ebacb8c4741b6
+8161	24984	7683187073011733	CMakeFiles/FinalApp.dir/ProfilePage.cpp.obj	dee8f34bacd592ca
+1289	10754	7683161493924726	CMakeFiles/FinalApp.dir/allCourses.cpp.obj	572b918ed073aa8e
+48159	65865	7683143688829986	CMakeFiles/FinalApp.dir/enrollStudent.cpp.obj	d034940aa7cedf26
+1352	11080	7683153430295080	CMakeFiles/FinalApp.dir/allassignments.cpp.obj	5ed98d5feef66ad8
+1183	6558	7683177106748047	CMakeFiles/FinalApp.dir/mesgboxutil.cpp.obj	54aaff8eecb4eef8
+24791	39122	7683187239307041	CMakeFiles/FinalApp.dir/uploadpdf.cpp.obj	b6082beb36f95b24
+24984	39113	7683187241241869	CMakeFiles/FinalApp.dir/uploadlecture.cpp.obj	67959610010d9e6d
+3606	17828	7683149802328467	CMakeFiles/FinalApp.dir/TopBar.cpp.obj	d8f8aabaaf4e8440
+25389	39598	7683187245291031	CMakeFiles/FinalApp.dir/main.cpp.obj	9f17ce5acd34a4e3
+341	5951	7683143178150216	build.ninja	ab0032dac0da8fbd
+1147	11570	7683189589323026	CMakeFiles/FinalApp.dir/AllLecture.cpp.obj	96b987b013dc9014
+25913	38423	7683187250527063	CMakeFiles/FinalApp.dir/studentlecture.cpp.obj	85225da8ca550eb
+73710	84519	7683143944305151	CMakeFiles/FinalApp.dir/studentuploadpdf.cpp.obj	71ebbfc68433a943
+120	149	7683143092488162	clean	577b940aee94fbd7
+96	1226	7683189846674837	FinalApp_autogen/timestamp	af58913ec11ab977
+96	1226	7683189846674837	FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+96	1226	7683189846674837	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/timestamp	af58913ec11ab977
+96	1226	7683189846674837	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+1228	9446	7683189857994568	CMakeFiles/FinalApp.dir/studentlecture.cpp.obj	85225da8ca550eb
+9446	12729	7683189940175989	FinalApp.exe	5759645924265b90
+94	1139	7683191216880883	FinalApp_autogen/timestamp	af58913ec11ab977
+94	1139	7683191216880883	FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+94	1139	7683191216880883	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/timestamp	af58913ec11ab977
+94	1139	7683191216880883	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+1161	10153	7683191227552345	CMakeFiles/FinalApp.dir/studentlecture.cpp.obj	85225da8ca550eb
+1149	11121	7683191227432668	CMakeFiles/FinalApp.dir/uploadlecture.cpp.obj	67959610010d9e6d
+1142	11147	7683191227362857	CMakeFiles/FinalApp.dir/uploadpdf.cpp.obj	b6082beb36f95b24
+1155	12087	7683191227492509	CMakeFiles/FinalApp.dir/AllLecture.cpp.obj	96b987b013dc9014
+12087	15977	7683191336811416	FinalApp.exe	5759645924265b90
+93	1243	7683192789197518	FinalApp_autogen/timestamp	af58913ec11ab977
+93	1243	7683192789197518	FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+93	1243	7683192789197518	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/timestamp	af58913ec11ab977
+93	1243	7683192789197518	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+1252	9161	7683192800796504	CMakeFiles/FinalApp.dir/studentlecture.cpp.obj	85225da8ca550eb
+1246	11348	7683192800736673	CMakeFiles/FinalApp.dir/AllLecture.cpp.obj	96b987b013dc9014
+11349	15106	7683192901757727	FinalApp.exe	5759645924265b90
+91	1193	7683196148624847	FinalApp_autogen/timestamp	af58913ec11ab977
+91	1193	7683196148624847	FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+91	1193	7683196148624847	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/timestamp	af58913ec11ab977
+91	1193	7683196148624847	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+1196	9136	7683196159675292	CMakeFiles/FinalApp.dir/studentlecture.cpp.obj	85225da8ca550eb
+9136	12189	7683196239072975	FinalApp.exe	5759645924265b90
+174	1598	7683200017634447	FinalApp_autogen/timestamp	af58913ec11ab977
+174	1598	7683200017634447	FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+174	1598	7683200017634447	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/timestamp	af58913ec11ab977
+174	1598	7683200017634447	C:/Users/Lenovo/Documents/University/Semester 2/OOP Lab/Project Database/Virtual-Learning-System/build/Desktop_Qt_6_8_2_MinGW_64_bit-Debug/FinalApp_autogen/mocs_compilation.cpp	af58913ec11ab977
+1602	12348	7683200031916254	CMakeFiles/FinalApp.dir/studentlecture.cpp.obj	85225da8ca550eb
+12349	15330	7683200139374113	FinalApp.exe	5759645924265b90

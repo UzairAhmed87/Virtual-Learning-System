@@ -160,7 +160,7 @@ StudentsAllCourses::StudentsAllCourses(const QString &ID, QWidget *parent, QWidg
     QGridLayout *scrollLayout = new QGridLayout(scrollWidget);
     scrollLayout->setContentsMargins(0, 0, 0, 0);
     scrollLayout->setSpacing(20);
-    scrollLayout->setAlignment(Qt::AlignTop);
+    scrollLayout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
 
     // Header section
     QLabel *titleLabel = new QLabel("Your Courses", scrollWidget);

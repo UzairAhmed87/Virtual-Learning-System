@@ -3,7 +3,6 @@
 #include <QSqlError>
 
 DatabaseManager::DatabaseManager() {
-    // 🔥 Hardcoded database credentials (CHANGE THESE TO MATCH YOUR DB)
     QString host = "ep-ancient-morning-a48hzu0g-pooler.us-east-1.aws.neon.tech";
     QString dbName = "neondb";
     QString user = "neondb_owner";
@@ -16,7 +15,6 @@ DatabaseManager::DatabaseManager() {
     qDebug() << "🔹 DB_USER:" << user;
     qDebug() << "🔹 DB_PORT:" << port;
 
-    // Use QPSQL driver for PostgreSQL
     db = QSqlDatabase::addDatabase("QPSQL");
     db.setHostName(host);
     db.setPort(port);
